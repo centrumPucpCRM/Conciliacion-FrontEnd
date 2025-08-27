@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { RoleProvider } from './context/RoleContext';
 import { PropuestasProvider } from './context/PropuestasContext';
 import { ProgramasProvider } from './context/ProgramasContext';
-import RoleSwitch from './components/RoleSwitch';
 import PaginaPrincipal from './pages/PaginaPrincipal';
 import PaginaPropuestas from './pages/PaginaPropuestas';
 import PaginaConciliaciones from './pages/PaginaConciliaciones';
@@ -43,7 +42,6 @@ function App() {
         <ProgramasProvider>
           <Router>
             <div className="App">
-              <RoleSwitch />
               <Routes>
                 <Route path="/" element={<Navigate to="/main" replace />} />
                 <Route path="/main" element={<PaginaPrincipal />} />

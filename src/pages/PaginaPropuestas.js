@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { usePropuestas } from '../context/PropuestasContext';
@@ -11,7 +11,9 @@ import {
   ROLES
 } from '../utils/mockData';
 import ModalNuevaPropuesta from '../components/ModalNuevaPropuesta';
-import ModalSeleccionRol from '../components/ModalSeleccionRol';
+import RoleSwitch from '../components/RoleSwitch';
+import ModalSeleccionRol from '../components/ModalSeleccionRol'; // <-- si no lo tenías, agrégalo
+import ModalBusquedaAvanzada from '../components/ModalBusquedaAvanzada';
 
 const PaginaPropuestas = () => {
   const navigate = useNavigate();
@@ -22,11 +24,22 @@ const PaginaPropuestas = () => {
   const [filtros, setFiltros] = useState({
     fechaInicio: '',
     fechaFin: '',
-    estado: ''
+    estados: [],   // <- ahora array
+    carteras: []   // <- ahora array
   });
   const [modalNuevaPropuesta, setModalNuevaPropuesta] = useState(false);
   const [modalSeleccionRol, setModalSeleccionRol] = useState(false);
   const [propuestaSeleccionada, setPropuestaSeleccionada] = useState(null);
+  const [busquedaNombre, setBusquedaNombre] = useState('');
+  const [modalBusquedaAvanzada, setModalBusquedaAvanzada] = useState(false);
+  const { fechaInicio, fechaFin, estados, carteras } = filtros;
+
+  // Opciones de carteras para el filtro avanzado
+  const todasCarteras = useMemo(() => {
+    const set = new Set();
+    propuestas.forEach(p => p.carteras.forEach(c => set.add(c)));
+    return Array.from(set);
+  }, [propuestas]);
 
   // Filtrar propuestas según el rol
   const filtrarPorRol = useCallback((propuestas) => {
@@ -46,22 +59,68 @@ const PaginaPropuestas = () => {
 
   useEffect(() => {
     let filtradas = filtrarPorRol(propuestas);
-    if (filtros.fechaInicio) {
-      filtradas = filtradas.filter(p => new Date(p.fecha_creacion) >= new Date(filtros.fechaInicio));
-    }
-    if (filtros.fechaFin) {
-      filtradas = filtradas.filter(p => new Date(p.fecha_creacion) <= new Date(filtros.fechaFin));
-    }
-    if (filtros.estado) {
-      filtradas = filtradas.filter(p => p.estado === filtros.estado);
-    }
-    setPropuestasFiltradas(filtradas);
-  }, [propuestas, filtros, currentRole, currentUserJP, currentUserSubdirector, filtrarPorRol]);
 
-  const handleFiltroChange = (e) => {
-    const { name, value } = e.target;
-    setFiltros(prev => ({ ...prev, [name]: value }));
-  };
+    // Convierte dd/mm/yyyy o yyyy-mm-dd a Date
+    const parseFecha = (fechaStr, endOfDay = false) => {
+      if (!fechaStr) return null;
+      let d;
+      if (typeof fechaStr === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(fechaStr)) {
+          const [y, m, dd] = fechaStr.split('-');
+          d = new Date(Number(y), Number(m) - 1, Number(dd));
+        } else if (/^\d{2}\/\d{2}\/\d{4}/.test(fechaStr)) {
+          const [dd, m, y] = fechaStr.split('/');
+          d = new Date(Number(y), Number(m) - 1, Number(dd));
+        } else {
+          d = new Date(fechaStr);
+        }
+      } else if (fechaStr instanceof Date) {
+        d = fechaStr;
+      } else {
+        d = new Date(fechaStr);
+      }
+      if (endOfDay && d instanceof Date && !isNaN(d)) {
+        d.setHours(23, 59, 59, 999); // fecha fin inclusiva
+      }
+      return d;
+    };
+
+    filtradas = filtradas.filter((p) => {
+      const fechaPropuesta = p.fecha_creacion || p.fecha_propuesta;
+      const fechaPropuestaObj = parseFecha(fechaPropuesta);
+      if (!fechaPropuestaObj || isNaN(fechaPropuestaObj.getTime())) return false;
+
+      if (filtros.fechaInicio) {
+        const fIni = parseFecha(filtros.fechaInicio);
+        if (fIni && fechaPropuestaObj < fIni) return false;
+      }
+      if (filtros.fechaFin) {
+        const fFin = parseFecha(filtros.fechaFin, true); // inclusiva
+        if (fFin && fechaPropuestaObj > fFin) return false;
+      }
+      return true;
+    });
+
+    // 🔹 Estados múltiples
+    if (filtros.estados.length > 0) {
+      filtradas = filtradas.filter(p => filtros.estados.includes(p.estado));
+    }
+
+    // 🔹 Carteras múltiples (intersección)
+    if (filtros.carteras.length > 0) {
+      filtradas = filtradas.filter(p =>
+        p.carteras?.some(c => filtros.carteras.includes(c))
+      );
+    }
+
+    // 🔹 Búsqueda por nombre
+    if (busquedaNombre.trim()) {
+      const q = busquedaNombre.trim().toLowerCase();
+      filtradas = filtradas.filter(p => p.nombre.toLowerCase().includes(q));
+    }
+
+    setPropuestasFiltradas(filtradas);    
+  }, [propuestas, filtros, busquedaNombre, currentRole, currentUserJP, currentUserSubdirector, filtrarPorRol]);
 
   const handleNuevaPropuesta = (nuevaPropuesta) => {
     setPropuestas(prev => [nuevaPropuesta, ...prev]);
@@ -115,203 +174,336 @@ const PaginaPropuestas = () => {
     }
   };
 
+  // Filtros para las grillas
+  const propuestasAbiertas = propuestasFiltradas.filter(p =>
+    [ESTADOS.PROGRAMADA, ESTADOS.GENERADA, ESTADOS.PRE_CONCILIADO, ESTADOS.APROBACION].includes(p.estado)
+  );
+  const propuestasConciliacion = propuestasFiltradas.filter(p =>
+    p.estado === ESTADOS.CONCILIACION
+  );
+  const propuestasCanceladas = propuestasFiltradas.filter(p =>
+    p.estado === ESTADOS.CANCELADO
+  );
+
+
+  // --- Helpers para formatear fechas y texto de filtros ---
+  const formatFechaParaTexto = useCallback((v) => {
+    if (!v) return null;
+    // input type="date" => 'yyyy-mm-dd'
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [y, m, d] = v.split("-");
+      return `${d}/${m}/${y}`;
+    }
+    // ya viene como dd/mm/yyyy
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) return v;
+
+    const dt = new Date(v);
+    return isNaN(dt) ? v : dt.toLocaleDateString("es-PE");
+  }, []);
+
+  const rangoTexto = useMemo(() => {
+    if (!fechaInicio && !fechaFin) return "";
+    const fi = fechaInicio ? formatFechaParaTexto(fechaInicio) : null;
+    const ff = fechaFin ? formatFechaParaTexto(fechaFin) : null;
+    if (fi && ff) return `Desde ${fi} hasta ${ff}`;
+    if (fi && !ff) return `Desde ${fi}`;
+    if (!fi && ff) return `Hasta ${ff}`;
+    return "";
+  }, [fechaInicio, fechaFin, formatFechaParaTexto]);
+
+  const estadosTexto = useMemo(() => (
+    estados.length ? estados.join(", ") : ""
+  ), [estados]);
+
+  const carterasTexto = useMemo(() => (
+    carteras.length ? carteras.join(", ") : ""
+  ), [carteras]);
+
+
+
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-light via-background-subtle to-white">
-      {/* Header sticky */}
-      <div className="sticky top-0 z-30 bg-white shadow-soft border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <button 
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
-            onClick={() => navigate('/main')}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span>Volver al Inicio</span>
-          </button>
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent-teal to-accent-green rounded-xl flex items-center justify-center shadow-medium">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 014-4h4m0 0V7a4 4 0 00-4-4H7a4 4 0 00-4 4v10a4 4 0 004 4h4" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Gestión de Propuestas</h1>
-              <p className="text-gray-600 text-sm">Administre todas las propuestas del sistema</p>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+  <div className="px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <button
+        className="flex items-center gap-2 px-5 py-2 bg-white border border-gray-200 rounded-xl shadow hover:bg-blue-100 transition font-semibold text-gray-700"
+        onClick={() => navigate('/main')}
+      >
+        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Volver al inicio
+      </button>
+
+      <div className="flex-shrink-0">
+        <RoleSwitch />
       </div>
+    </div>
+  </div>
 
-      {/* Contenido principal */}
-      <div className="w-[99vw] box-border mx-auto px-6 py-8">
-        {/* Filtros */}
-        <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-medium">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-gray-800">Filtros de Búsqueda</h3>
+{/* Buscadores y Nueva Propuesta */}
+<div className="px-4 sm:px-6 lg:px-8 mt-8">
+  <div className="max-w-[99%] mx-auto bg-white border border-gray-200 rounded-2xl shadow-lg p-4 md:p-6 lg:p-8">
+    <div className="flex items-center gap-4 flex-wrap">
+      {/* Input con ícono (ocupa el espacio) */}
+      <div className="flex-1 flex items-center text-2xl font-bold text-blue-700">
+        <svg className="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg font-normal text-blue-900 bg-blue-50"
+          placeholder="Buscar propuesta por nombre..."
+          value={busquedaNombre}
+          onChange={e => setBusquedaNombre(e.target.value)}
+        />
+      </div>
+      {/*Texto adicional*/}
+    {/* Texto adicional: resumen de filtros */}
+    {(rangoTexto || estadosTexto || carterasTexto) && (
+      <div className="flex-1 min-w-[220px] text-sm text-blue-700 whitespace-pre-line leading-6">
+        {rangoTexto && (
+          <div>
+            <span className="font-semibold">Fecha:</span> {rangoTexto}
           </div>
-          
-          <div className="flex items-end space-x-6">
-            <div className="space-y-2 flex-1">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Creación - Desde</label>
-              <input
-                type="date"
-                name="fechaInicio"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                value={filtros.fechaInicio}
-                onChange={handleFiltroChange}
-              />
-            </div>
-
-            <div className="space-y-2 flex-1">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Creación - Hasta</label>
-              <input
-                type="date"
-                name="fechaFin"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                value={filtros.fechaFin}
-                onChange={handleFiltroChange}
-              />
-            </div>
-
-            <div className="space-y-2 flex-1">
-              <label className="block text-sm font-medium text-gray-700">Estado</label>
-              <select
-                name="estado"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-                value={filtros.estado}
-                onChange={handleFiltroChange}
-              >
-                <option value="">Todos los estados</option>
-                {Object.values(ESTADOS).map(estado => (
-                  <option key={estado} value={estado}>
-                    {estado.charAt(0).toUpperCase() + estado.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-shrink-0">
-                              <button 
-                  className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 font-medium"
-                  onClick={() => setModalNuevaPropuesta(true)}
-                >
-                  Nueva Propuesta
-                </button>
-            </div>
+        )}
+        {estadosTexto && (
+          <div>
+            <span className="font-semibold">Estados:</span> {estadosTexto}
           </div>
-        </div>
-
-        {/* Grilla de Propuestas */}
-        <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent-purple to-accent-indigo rounded-xl flex items-center justify-center shadow-medium">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">Propuestas</h3>
-                  <p className="text-gray-600 text-sm">{propuestasFiltradas.length} propuestas encontradas</p>
-                </div>
-              </div>
-            </div>
+        )}
+        {carterasTexto && (
+          <div>
+            <span className="font-semibold">Carteras:</span> {carterasTexto}
           </div>
-          
-          {propuestasFiltradas.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h4 className="text-lg font-medium text-gray-900 mb-2">No se encontraron propuestas</h4>
-              <p className="text-gray-500">Intente ajustar los filtros de búsqueda</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nombre de Propuesta
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha de Propuesta
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Carteras
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {propuestasFiltradas.map(propuesta => (
-                    <tr key={propuesta.id} className="hover:bg-gray-50 transition-colors duration-200">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{propuesta.nombre}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatearFecha(propuesta.fecha_propuesta)}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
-                          {propuesta.estado}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs">
-                          {propuesta.carteras.join(', ')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-2">
-                          {tienePermiso(currentRole, propuesta.estado) && (
-                            <button
-                              className="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 text-xs font-medium"
-                              onClick={() => handleEntrarPropuesta(propuesta)}
-                            >
-                              Entrar
-                            </button>
-                          )}
-                          
-                          {tienePermiso(currentRole, propuesta.estado) && (
+        )}
+      </div>
+    )}
+
+      {/* Botón búsqueda avanzada */}
+      <button
+        className="flex items-center gap-2 text-blue-700 hover:text-blue-900"
+        onClick={() => setModalBusquedaAvanzada(true)}
+      >
+        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+        </svg>
+        Búsqueda avanzada
+      </button>
+
+      {/* Botón nueva propuesta */}
+      <button
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow hover:from-blue-600 hover:to-blue-700 transition"
+        onClick={() => setModalNuevaPropuesta(true)}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        Nueva propuesta
+      </button>
+    </div>
+  </div>
+</div>
+
+      <ModalBusquedaAvanzada
+        isOpen={modalBusquedaAvanzada}
+        onClose={() => setModalBusquedaAvanzada(false)}
+        filtros={filtros}
+        setFiltros={setFiltros}
+        ESTADOS={ESTADOS}
+        todasCarteras={todasCarteras}
+        onApply={() => setModalBusquedaAvanzada(false)} // mismo comportamiento actual
+      />
+
+      {/* Grilla 1: Propuestas abiertas */}
+      <div className="px-12 mt-8">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 mb-8">
+          <div className="text-2xl font-extrabold text-blue-700 mb-2 text-left">
+            Abiertas
+          </div>
+          <div className="overflow-x-auto mt-6">
+            <table className="w-full text-sm">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Nombre de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Fecha de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Carteras</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {propuestasAbiertas.map(propuesta => (
+                  <tr key={propuesta.id} className="hover:bg-blue-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-900">{propuesta.nombre}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{formatearFecha(propuesta.fecha_propuesta)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
+                        {propuesta.estado}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="max-w-xs">{propuesta.carteras.join(', ')}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        {tienePermiso(currentRole, propuesta.estado) && (
                           <button
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 text-xs font-medium"
+                            className="px-3 py-1 bg-blue-500 hover:bg-blue-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleEntrarPropuesta(propuesta)}
+                          >
+                            Entrar
+                          </button>
+                        )}
+                        {tienePermiso(currentRole, propuesta.estado) && (
+                          <button
+                            className="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg shadow text-xs font-semibold"
                             onClick={() => handleVerPropuesta(propuesta)}
                           >
                             Ver
                           </button>
-                          )}
-                          
-                          {puedeCancelar(currentRole) && propuesta.estado !== ESTADOS.CANCELADO && (
-                            <button
-                              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 text-xs font-medium"
-                              onClick={() => handleCancelarPropuesta(propuesta)}
-                            >
-                              Cancelar
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        )}
+                        {puedeCancelar(currentRole) && propuesta.estado !== ESTADOS.CANCELADO && (
+                          <button
+                            className="px-3 py-1 bg-red-500 hover:bg-red-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleCancelarPropuesta(propuesta)}
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Grilla 2: Propuestas conciliación */}
+      <div className="px-12">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 mb-8">
+          <div className="text-2xl font-extrabold text-blue-700 mb-2 text-left">
+            Conciliadas
+          </div>
+          <div className="overflow-x-auto mt-6">
+            <table className="w-full text-sm">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Nombre de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Fecha de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Carteras</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {propuestasConciliacion.map(propuesta => (
+                  <tr key={propuesta.id} className="hover:bg-blue-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-900">{propuesta.nombre}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{formatearFecha(propuesta.fecha_propuesta)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
+                        {propuesta.estado}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="max-w-xs">{propuesta.carteras.join(', ')}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        {tienePermiso(currentRole, propuesta.estado) && (
+                          <button
+                            className="px-3 py-1 bg-blue-500 hover:bg-blue-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleEntrarPropuesta(propuesta)}
+                          >
+                            Entrar
+                          </button>
+                        )}
+                        {tienePermiso(currentRole, propuesta.estado) && (
+                          <button
+                            className="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleVerPropuesta(propuesta)}
+                          >
+                            Ver
+                          </button>
+                        )}
+                        {puedeCancelar(currentRole) && propuesta.estado !== ESTADOS.CANCELADO && (
+                          <button
+                            className="px-3 py-1 bg-red-500 hover:bg-red-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleCancelarPropuesta(propuesta)}
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Grilla 3: Propuestas canceladas */}
+      <div className="px-12">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 mb-8">
+          <div className="text-2xl font-extrabold text-blue-700 mb-2 text-left">
+            Canceladas
+          </div>
+          <div className="overflow-x-auto mt-6">
+            <table className="w-full text-sm">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Nombre de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Fecha de Propuesta</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Motivo de Cancelación</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {propuestasCanceladas.map(propuesta => (
+                  <tr key={propuesta.id} className="hover:bg-blue-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-900">{propuesta.nombre}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{formatearFecha(propuesta.fecha_propuesta)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
+                        {propuesta.estado}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>{propuesta.motivo_cancelacion}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        {tienePermiso(currentRole, propuesta.estado) && (
+                          <button
+                            className="px-3 py-1 bg-blue-500 hover:bg-blue-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleEntrarPropuesta(propuesta)}
+                          >
+                            Entrar
+                          </button>
+                        )}
+                        {tienePermiso(currentRole, propuesta.estado) && (
+                          <button
+                            className="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg shadow text-xs font-semibold"
+                            onClick={() => handleVerPropuesta(propuesta)}
+                          >
+                            Ver
+                          </button>
+                        )}
+                        {/* No mostrar cancelar en canceladas */}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -321,14 +513,20 @@ const PaginaPropuestas = () => {
         onClose={() => setModalNuevaPropuesta(false)}
         onPropuestaCreada={handleNuevaPropuesta}
       />
-
-      <ModalSeleccionRol
+      <c
         isOpen={modalSeleccionRol}
         onClose={() => setModalSeleccionRol(false)}
         onRolSeleccionado={handleRolSeleccionado}
         propuesta={propuestaSeleccionada}
       />
+    <ModalSeleccionRol
+      isOpen={modalSeleccionRol}
+      onClose={() => setModalSeleccionRol(false)}
+      onRolSeleccionado={handleRolSeleccionado}
+      propuesta={propuestaSeleccionada}
+    />
     </div>
+    
   );
 };
 

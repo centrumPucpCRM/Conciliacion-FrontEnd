@@ -15,7 +15,7 @@ export const ESTADOS = {
 export const ROLES = {
   ADMINISTRADOR: 'administrador',
   DAF: 'daf',
-  'DAF-SD': 'daf-sd',
+  DAF_SD: 'daf-sd', // Cambia la clave para que sea válida como propiedad JS
   JP: 'jp',
   SUBDIRECTOR: 'subdirector'
 };
@@ -176,26 +176,34 @@ export const generarProgramasPorCartera = (carteras) => {
 export const generarPropuestasPrueba = () => {
   const propuestas = [];
   const estados = Object.values(ESTADOS);
-  
+
   for (let i = 1; i <= 8; i++) {
     const fechaBase = new Date();
-    const fechaPropuesta = i % 3 === 0 ? addDays(fechaBase, i) : subDays(fechaBase, i);
-    const estado = estados[i % estados.length];
-    // Seleccionar carteras de las disponibles
+    fechaBase.setHours(0, 0, 0, 0);
+
+    const fechaPropuestaDate = i % 3 === 0 ? addDays(fechaBase, i) : subDays(fechaBase, i);
+
+    let estado = estados[i % estados.length];
     const numCarteras = (i % CARTERAS.length) + 1;
     const carterasPropuesta = CARTERAS.slice(0, numCarteras);
-    
-    propuestas.push({
+
+    const nombre = `Propuesta_${i}_${fechaPropuestaDate.toLocaleDateString('es-ES')}`;
+
+    // Si está cancelado, agrega motivo_cancelacion
+    const propuestaObj = {
       id: uuidv4(),
-      nombre: `Propuesta_${format(fechaPropuesta, 'yyyy-MM-dd')}_${i}`,
-      fecha_propuesta: fechaPropuesta,
+      nombre,
+      fecha_propuesta: fechaPropuestaDate,
       estado: estado,
-      carteras: carterasPropuesta,
-      fecha_creacion: subDays(fechaBase, i + 5),
-      fecha_actualizacion: new Date()
-    });
+      carteras: carterasPropuesta
+    };
+    if (estado === ESTADOS.CANCELADO) {
+      propuestaObj.motivo_cancelacion = `Motivo de cancelación ejemplo para propuesta ${i}`;
+    }
+
+    propuestas.push(propuestaObj);
   }
-  
+
   return propuestas;
 };
 
@@ -223,7 +231,7 @@ export const generarConciliacionesPrueba = () => {
 
 // Matriz de permisos por rol y estado
 export const MATRIZ_PERMISOS = {
-  [ROLES['DAF-SD']]: {
+  [ROLES.DAF_SD]: {
     [ESTADOS.PROGRAMADA]: false,
     [ESTADOS.GENERADA]: true,
     [ESTADOS.PRE_CONCILIADO]: true,
@@ -287,7 +295,20 @@ export const determinarEstadoInicial = (fechaPropuesta) => {
 
 // Función para formatear fecha
 export const formatearFecha = (fecha) => {
-  return format(new Date(fecha), 'dd/MM/yyyy HH:mm');
+  if (!fecha) return '';
+  try {
+    // Para debugging
+    console.log('Formateando fecha:', fecha, typeof fecha);
+    const date = new Date(fecha);
+    if (isNaN(date.getTime())) {
+      console.log('Fecha inválida');
+      return '';
+    }
+    return format(date, 'dd/MM/yyyy HH:mm');
+  } catch (error) {
+    console.error('Error formateando fecha:', error);
+    return '';
+  }
 };
 
 // Función para obtener el color del estado

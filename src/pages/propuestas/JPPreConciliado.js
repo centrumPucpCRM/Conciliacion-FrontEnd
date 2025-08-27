@@ -390,13 +390,13 @@ const JPPreConciliado = () => {
              <table className="w-full divide-y divide-gray-200" style={{ tableLayout: 'fixed', width: '100%' }}>
               <colgroup>
                 <col style={{ width: '10%' }} />   {/* Cartera */}
-                <col style={{ width: '20%' }} />   {/* Programa */}
-                <col style={{ width: '8%' }} />    {/* Meta Venta */}
-                <col style={{ width: '8%' }} />    {/* Meta Alumnos */}
-                <col style={{ width: '8%' }} />    {/* Alumnos Reales */}
-                <col style={{ width: '10%' }} />   {/* Monto Real */}
-                <col style={{ width: '8%' }} />    {/* Punto mínimo */}
-                <col style={{ width: '8%' }} />    {/* En riesgo */}
+                <col style={{ width: '35%' }} />   {/* Programa */}
+                <col style={{ width: '6%' }} />    {/* Meta Venta */}
+                <col style={{ width: '6%' }} />    {/* Meta Alumnos */}
+                <col style={{ width: '6%' }} />    {/* Alumnos Reales */}
+                <col style={{ width: '6%' }} />   {/* Monto Real */}
+                <col style={{ width: '6%' }} />    {/* Punto mínimo */}
+                <col style={{ width: '6%' }} />    {/* En riesgo */}
                 <col style={{ width: '10%' }} />   {/* No Aperturar */}
                 <col style={{ width: '10%' }} />   {/* Refutar */}
               </colgroup>

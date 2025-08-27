@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha, obtenerColorEstado } from '../../utils/mockData';
+import { formatearFecha, obtenerColorEstado } from '../../../utils/mockData';
 
-const AdministradorCancelado = () => {
+const AdministradorConciliado = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
 
@@ -10,7 +10,7 @@ const AdministradorCancelado = () => {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
-    estado: 'cancelado',
+    estado: 'conciliado',
     carteras: ['Cartera Comercial', 'Cartera Personal'],
     fecha_creacion: new Date(),
     fecha_actualizacion: new Date()
@@ -34,14 +34,14 @@ const AdministradorCancelado = () => {
               </button>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-medium">
+              <div className="w-10 h-10 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Propuesta Cancelada</h1>
-                <p className="text-gray-600 text-sm">Como Administrador, puede revisar y reactivar propuestas canceladas</p>
+                <h1 className="text-2xl font-bold text-gray-800">Gestión de Propuesta Conciliada</h1>
+                <p className="text-gray-600 text-sm">Como Administrador, puede gestionar la propuesta ya conciliada</p>
               </div>
             </div>
           </div>
@@ -53,7 +53,7 @@ const AdministradorCancelado = () => {
         {/* Información de la propuesta */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -78,7 +78,7 @@ const AdministradorCancelado = () => {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Estado</label>
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
-                Cancelado
+                Conciliado
               </span>
             </div>
             
@@ -99,24 +99,24 @@ const AdministradorCancelado = () => {
           </div>
         </div>
 
-        {/* Acciones específicas para Administrador + Cancelado */}
+        {/* Acciones específicas para Administrador + Conciliado */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Acciones de Administrador - Propuesta Cancelada</h3>
-              <p className="text-gray-600">Funciones específicas para gestionar propuestas canceladas</p>
+              <h3 className="text-xl font-bold text-gray-800">Acciones de Administrador - Propuesta Conciliada</h3>
+              <p className="text-gray-600">Funciones específicas para gestionar propuestas conciliadas</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Revisar Cancelación')}
+              onClick={() => alert('Ejecutando: Revisar Conciliación')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
@@ -125,35 +125,49 @@ const AdministradorCancelado = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Revisar Cancelación</span>
+                <span className="font-medium text-gray-800">Revisar Conciliación</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Reactivar')}
+              onClick={() => alert('Ejecutando: Aprobar Proyección')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Reactivar</span>
+                <span className="font-medium text-gray-800">Aprobar Proyección</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Eliminar Definitivamente')}
+              onClick={() => alert('Ejecutando: Rechazar')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Eliminar Definitivamente</span>
+                <span className="font-medium text-gray-800">Rechazar</span>
+              </div>
+            </button>
+
+            <button
+              className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
+              onClick={() => alert('Ejecutando: Cambiar Estado')}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <span className="font-medium text-gray-800">Cambiar Estado</span>
               </div>
             </button>
           </div>
@@ -174,19 +188,19 @@ const AdministradorCancelado = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-              <h4 className="font-semibold text-red-800 mb-2">Estado Actual: Cancelado</h4>
-              <p className="text-red-700 text-sm">
-                La propuesta se encuentra en el estado "Cancelado" y está siendo gestionada por el Administrador.
-                Como administrador, puede revisar la cancelación, reactivar la propuesta o eliminarla definitivamente.
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Conciliado</h4>
+              <p className="text-blue-700 text-sm">
+                La propuesta se encuentra en el estado "Conciliado" y está siendo gestionada por el Administrador.
+                Como administrador, puede revisar la conciliación, aprobar la proyección, rechazarla o cambiar el estado.
               </p>
             </div>
             
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <h4 className="font-semibold text-yellow-800 mb-2">Próximos Pasos</h4>
-              <p className="text-yellow-700 text-sm">
-                Utilice las acciones disponibles arriba para gestionar la propuesta cancelada. 
-                Puede reactivar la propuesta para que vuelva al estado "Generada" o eliminarla definitivamente del sistema.
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-semibold text-green-800 mb-2">Próximos Pasos</h4>
+              <p className="text-green-700 text-sm">
+                Utilice las acciones disponibles arriba para avanzar en el proceso de la propuesta. 
+                Puede aprobar la proyección para que avance al estado "Proyectado" o rechazarla si no cumple con los requisitos.
               </p>
             </div>
           </div>
@@ -196,4 +210,4 @@ const AdministradorCancelado = () => {
   );
 };
 
-export default AdministradorCancelado;
+export default AdministradorConciliado;

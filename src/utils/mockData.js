@@ -155,7 +155,7 @@ export const generarProgramasPorCartera = (carteras) => {
         });
       }
       
-             programas.push({
+    programas.push({
          id: `${cartera}-${i}`,
          cartera,
          nombre: `Programa con nombre largo del programa es el programa de correlativo y de la cartera correspondiente ${i} (${cartera})`,

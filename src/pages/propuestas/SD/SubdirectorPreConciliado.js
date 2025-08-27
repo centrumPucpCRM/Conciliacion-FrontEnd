@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha, obtenerColorEstado } from '../../utils/mockData';
+import { formatearFecha, obtenerColorEstado } from '../../../utils/mockData';
 
-const SubdirectorProyectado = () => {
+const SubdirectorPreConciliado = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
 
@@ -10,7 +10,7 @@ const SubdirectorProyectado = () => {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
-    estado: 'proyectado',
+    estado: 'pre-conciliado',
     carteras: ['Cartera Comercial', 'Cartera Personal'],
     fecha_creacion: new Date(),
     fecha_actualizacion: new Date()
@@ -40,8 +40,8 @@ const SubdirectorProyectado = () => {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Proyección</h1>
-                <p className="text-gray-600 text-sm">Como Subdirector, debe gestionar la propuesta proyectada</p>
+                <h1 className="text-2xl font-bold text-gray-800">Supervisión de Conciliación</h1>
+                <p className="text-gray-600 text-sm">Como Subdirector, debe supervisar el proceso de conciliación</p>
               </div>
             </div>
           </div>
@@ -78,7 +78,7 @@ const SubdirectorProyectado = () => {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Estado</label>
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
-                Proyectado
+                Pre-conciliado
               </span>
             </div>
             
@@ -99,7 +99,7 @@ const SubdirectorProyectado = () => {
           </div>
         </div>
 
-        {/* Acciones específicas para Subdirector + Proyectado */}
+        {/* Acciones específicas para Subdirector + Pre-conciliado */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
@@ -108,29 +108,30 @@ const SubdirectorProyectado = () => {
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Acciones de Subdirector - Propuesta Proyectada</h3>
-              <p className="text-gray-600">Funciones específicas para gestión de proyección</p>
+              <h3 className="text-xl font-bold text-gray-800">Acciones de Subdirector - Propuesta Pre-conciliada</h3>
+              <p className="text-gray-600">Funciones específicas para supervisión de conciliación</p>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Revisar Proyección')}
+              onClick={() => alert('Ejecutando: Supervisar Proceso')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Revisar Proyección</span>
+                <span className="font-medium text-gray-800">Supervisar Proceso</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Finalizar Proceso')}
+              onClick={() => alert('Ejecutando: Aprobar Avance')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
@@ -138,21 +139,21 @@ const SubdirectorProyectado = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Finalizar Proceso</span>
+                <span className="font-medium text-gray-800">Aprobar Avance</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Generar Reporte')}
+              onClick={() => alert('Ejecutando: Solicitar Información')}
             >
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Generar Reporte</span>
+                <span className="font-medium text-gray-800">Solicitar Información</span>
               </div>
             </button>
           </div>
@@ -174,18 +175,18 @@ const SubdirectorProyectado = () => {
           
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Proyectado</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Pre-conciliado</h4>
               <p className="text-blue-700 text-sm">
-                La propuesta se encuentra en el estado "Proyectado" y está siendo gestionada por el Subdirector.
-                Como Subdirector, debe revisar la proyección final, finalizar el proceso o generar reportes según sea necesario.
+                La propuesta se encuentra en el estado "Pre-conciliado" y está siendo supervisada por el Subdirector.
+                Como Subdirector, debe supervisar el proceso de conciliación, aprobar el avance o solicitar información adicional.
               </p>
             </div>
             
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
               <h4 className="font-semibold text-green-800 mb-2">Próximos Pasos</h4>
               <p className="text-green-700 text-sm">
-                Utilice las acciones disponibles arriba para gestionar la proyección. 
-                Puede revisar los detalles finales, finalizar el proceso completo o generar reportes para documentación.
+                Utilice las acciones disponibles arriba para supervisar el proceso de conciliación. 
+                Puede aprobar el avance para que continúe al estado "Conciliado" o solicitar información si es necesario.
               </p>
             </div>
           </div>
@@ -195,4 +196,4 @@ const SubdirectorProyectado = () => {
   );
 };
 
-export default SubdirectorProyectado;
+export default SubdirectorPreConciliado;

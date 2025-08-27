@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { CARTERAS, determinarEstadoInicial } from '../utils/mockData';
+import { CARTERAS, determinarEstadoInicial } from '../../utils/mockData';
 
 const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
   const [formData, setFormData] = useState({

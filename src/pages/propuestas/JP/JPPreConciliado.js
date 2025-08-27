@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha } from '../../utils/mockData';
-import { usePropuestas } from '../../context/PropuestasContext';
-import { useProgramas } from '../../context/ProgramasContext';
-import { useRole } from '../../context/RoleContext';
+import { formatearFecha } from '../../../utils/mockData';
+import { usePropuestas } from '../../../context/PropuestasContext';
+import { useProgramas } from '../../../context/ProgramasContext';
+import { useRole } from '../../../context/RoleContext';
 
 const JPPreConciliado = () => {
   const navigate = useNavigate();

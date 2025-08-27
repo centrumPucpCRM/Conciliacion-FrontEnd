@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha, obtenerColorEstado } from '../../utils/mockData';
+import { formatearFecha, obtenerColorEstado } from '../../../utils/mockData';
 
-const AdministradorConciliado = () => {
+const AdministradorPreConciliado = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
 
@@ -10,7 +10,7 @@ const AdministradorConciliado = () => {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
-    estado: 'conciliado',
+    estado: 'pre-conciliado',
     carteras: ['Cartera Comercial', 'Cartera Personal'],
     fecha_creacion: new Date(),
     fecha_actualizacion: new Date()
@@ -34,14 +34,14 @@ const AdministradorConciliado = () => {
               </button>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
+              <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Propuesta Conciliada</h1>
-                <p className="text-gray-600 text-sm">Como Administrador, puede gestionar la propuesta ya conciliada</p>
+                <h1 className="text-2xl font-bold text-gray-800">Gestión de Propuesta Pre-conciliada</h1>
+                <p className="text-gray-600 text-sm">Como Administrador, puede supervisar el proceso de pre-conciliación</p>
               </div>
             </div>
           </div>
@@ -53,7 +53,7 @@ const AdministradorConciliado = () => {
         {/* Información de la propuesta */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -78,7 +78,7 @@ const AdministradorConciliado = () => {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Estado</label>
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
-                Conciliado
+                Pre-conciliado
               </span>
             </div>
             
@@ -99,24 +99,24 @@ const AdministradorConciliado = () => {
           </div>
         </div>
 
-        {/* Acciones específicas para Administrador + Conciliado */}
+        {/* Acciones específicas para Administrador + Pre-conciliado */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-accent-green to-accent-teal rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Acciones de Administrador - Propuesta Conciliada</h3>
-              <p className="text-gray-600">Funciones específicas para gestionar propuestas conciliadas</p>
+              <h3 className="text-xl font-bold text-gray-800">Acciones de Administrador - Propuesta Pre-conciliada</h3>
+              <p className="text-gray-600">Funciones específicas para supervisar el proceso de pre-conciliación</p>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Revisar Conciliación')}
+              onClick={() => alert('Ejecutando: Supervisar')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
@@ -125,13 +125,13 @@ const AdministradorConciliado = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Revisar Conciliación</span>
+                <span className="font-medium text-gray-800">Supervisar</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Aprobar Proyección')}
+              onClick={() => alert('Ejecutando: Aprobar Conciliación')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
@@ -139,7 +139,7 @@ const AdministradorConciliado = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Aprobar Proyección</span>
+                <span className="font-medium text-gray-800">Aprobar Conciliación</span>
               </div>
             </button>
 
@@ -189,10 +189,10 @@ const AdministradorConciliado = () => {
           
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Conciliado</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Pre-conciliado</h4>
               <p className="text-blue-700 text-sm">
-                La propuesta se encuentra en el estado "Conciliado" y está siendo gestionada por el Administrador.
-                Como administrador, puede revisar la conciliación, aprobar la proyección, rechazarla o cambiar el estado.
+                La propuesta se encuentra en el estado "Pre-conciliado" y está siendo supervisada por el Administrador.
+                Como administrador, puede supervisar el proceso, aprobar la conciliación, rechazarla o cambiar el estado.
               </p>
             </div>
             
@@ -200,7 +200,7 @@ const AdministradorConciliado = () => {
               <h4 className="font-semibold text-green-800 mb-2">Próximos Pasos</h4>
               <p className="text-green-700 text-sm">
                 Utilice las acciones disponibles arriba para avanzar en el proceso de la propuesta. 
-                Puede aprobar la proyección para que avance al estado "Proyectado" o rechazarla si no cumple con los requisitos.
+                Puede aprobar la conciliación para que avance al estado "Conciliado" o rechazarla si no cumple con los requisitos.
               </p>
             </div>
           </div>
@@ -210,4 +210,4 @@ const AdministradorConciliado = () => {
   );
 };
 
-export default AdministradorConciliado;
+export default AdministradorPreConciliado;

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha } from '../../utils/mockData';
-import { usePropuestas } from '../../context/PropuestasContext';
-import { useProgramas } from '../../context/ProgramasContext';
+import { formatearFecha } from '../../../utils/mockData';
+import { usePropuestas } from '../../../context/PropuestasContext';
+import { useProgramas } from '../../../context/ProgramasContext';
+import  PropuestasHeader from '../../../components/Propuestas/PropuestasHeader';
+import  PropuestaResumen from '../../../components/DAF/PreConciliada/PropuestaResumen';
 
 const DAFPreConciliado = () => {
   const navigate = useNavigate();
@@ -10,6 +12,7 @@ const DAFPreConciliado = () => {
   const { propuestas } = usePropuestas();
   const { programas, refutarPorJP, setRefutarPorJP, setProgramas } = useProgramas();
   const [solicitudesAprobadas, setSolicitudesAprobadas] = useState(new Set());
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const propuesta = propuestas.find(p => p.id === propuestaId) || {
     id: propuestaId,
@@ -60,11 +63,6 @@ const DAFPreConciliado = () => {
         descripcion: `Agregar alumno ${alumno.identificador} al programa ${programa.nombre}`
       });
     });
-
-    // NO mostrar solicitudes de cambio de monto aquí - estas van al JP primero
-    // Solo mostrar las respuestas del JP después de que procese la solicitud
-    // Respuestas del JP sobre montos propuestos por DAF
-
     // Solicitudes de rechazo de monto DAF
     const montosDafRechazados = programa.personas.filter(p => p.monto_daf_rechazado);
     montosDafRechazados.forEach(alumno => {
@@ -262,68 +260,16 @@ const DAFPreConciliado = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background-light via-background-subtle to-white">
       {/* Header */}
-      <div className="bg-white shadow-soft border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button 
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
-                onClick={() => navigate('/main/propuestas')}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Volver a Propuestas</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-accent-blue to-accent-purple rounded-xl flex items-center justify-center shadow-medium">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Revisión de Solicitudes</h1>
-                <p className="text-gray-600 text-sm">Como DAF, debe revisar las solicitudes de los JPs</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PropuestasHeader titulo="Etapa : Pre-Conciliada" onBack={() => navigate('/main/propuestas')} />
+      <PropuestaResumen
+        propuesta={propuesta}
+        formatearFecha={formatearFecha}
+        handlePreConciliar={() => setShowConfirm(true)}
+      />
 
       {/* Contenido principal */}
       <div className="w-[99vw] box-border mx-auto px-6 py-8">
-        {/* Información de la propuesta */}
-        <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-accent-blue to-accent-purple rounded-xl flex items-center justify-center shadow-medium">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Información de la Propuesta</h2>
-              <p className="text-gray-600">Detalles y configuración actual</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <p className="text-sm text-gray-900">{propuesta.nombre}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Propuesta</label>
-              <p className="text-sm text-gray-900">{formatearFecha(propuesta.fecha_propuesta)}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Carteras</label>
-              <p className="text-sm text-gray-900">{propuesta.carteras.join(', ')}</p>
-            </div>
-          </div>
-        </div>
+
 
         {/* Solicitudes de Refutación de Cancelación */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">

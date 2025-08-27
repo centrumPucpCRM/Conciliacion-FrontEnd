@@ -27,8 +27,8 @@ const RoleSwitch = () => {
   };
 
   return (
-    <div className="flex items-center space-x-4 justify-end p-4">
-      <label className="font-semibold text-gray-700">Rol:</label>
+    <div>
+      <label className="font-semibold text-gray-700"> Rol: </label>
       <select
         className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
         value={currentRole}
@@ -41,7 +41,7 @@ const RoleSwitch = () => {
       </select>
       {currentRole === ROLES.JP && (
         <>
-          <label className="font-semibold text-gray-700">Usuario JP:</label>
+          <label className="font-semibold text-gray-700"> Usuario JP: </label>
           <select
             className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
             value={currentUserJP.id}
@@ -51,7 +51,6 @@ const RoleSwitch = () => {
               <option key={jp.id} value={jp.id}>{jp.nombre}</option>
             ))}
           </select>
-          <span className="ml-2 text-gray-600">({currentUserJP.nombre})</span>
         </>
       )}
       {currentRole === ROLES.SUBDIRECTOR && (
@@ -66,7 +65,6 @@ const RoleSwitch = () => {
               <option key={sub.id} value={sub.id}>{sub.nombre}</option>
             ))}
           </select>
-          <span className="ml-2 text-gray-600">({currentUserSubdirector.nombre})</span>
         </>
       )}
     </div>

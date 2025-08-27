@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha, obtenerColorEstado } from '../../utils/mockData';
+import { formatearFecha, obtenerColorEstado } from '../../../utils/mockData';
 
-const DAFProyectado = () => {
+const SubdirectorConciliado = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
 
@@ -10,7 +10,7 @@ const DAFProyectado = () => {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
-    estado: 'proyectado',
+    estado: 'conciliado',
     carteras: ['Cartera Comercial', 'Cartera Personal'],
     fecha_creacion: new Date(),
     fecha_actualizacion: new Date()
@@ -34,14 +34,14 @@ const DAFProyectado = () => {
               </button>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-medium">
+              <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Revisión de Proyección Financiera</h1>
-                <p className="text-gray-600 text-sm">Como DAF, debe revisar la proyección financiera</p>
+                <h1 className="text-2xl font-bold text-gray-800">Revisión de Conciliación</h1>
+                <p className="text-gray-600 text-sm">Como Subdirector, debe revisar la propuesta conciliada</p>
               </div>
             </div>
           </div>
@@ -53,9 +53,9 @@ const DAFProyectado = () => {
         {/* Información de la propuesta */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div>
@@ -78,7 +78,7 @@ const DAFProyectado = () => {
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Estado</label>
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${obtenerColorEstado(propuesta.estado)}`}>
-                Proyectado
+                Conciliado
               </span>
             </div>
             
@@ -94,44 +94,43 @@ const DAFProyectado = () => {
             
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Rol Actual</label>
-              <p className="text-sm text-gray-900">DAF</p>
+              <p className="text-sm text-gray-900">Subdirector</p>
             </div>
           </div>
         </div>
 
-        {/* Acciones específicas para DAF + Proyectado */}
+        {/* Acciones específicas para Subdirector + Conciliado */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Acciones de DAF - Propuesta Proyectada</h3>
-              <p className="text-gray-600">Funciones específicas para revisión de proyección financiera</p>
+              <h3 className="text-xl font-bold text-gray-800">Acciones de Subdirector - Propuesta Conciliada</h3>
+              <p className="text-gray-600">Funciones específicas para revisión de conciliación</p>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Revisar Proyección')}
+              onClick={() => alert('Ejecutando: Revisar Conciliación')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Revisar Proyección</span>
+                <span className="font-medium text-gray-800">Revisar Conciliación</span>
               </div>
             </button>
 
             <button
               className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors duration-200 text-left group"
-              onClick={() => alert('Ejecutando: Aprobar Final')}
+              onClick={() => alert('Ejecutando: Aprobar Proyección')}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:shadow-medium transition-shadow duration-200">
@@ -139,7 +138,7 @@ const DAFProyectado = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="font-medium text-gray-800">Aprobar Final</span>
+                <span className="font-medium text-gray-800">Aprobar Proyección</span>
               </div>
             </button>
 
@@ -175,18 +174,18 @@ const DAFProyectado = () => {
           
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Proyectado</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">Estado Actual: Conciliado</h4>
               <p className="text-blue-700 text-sm">
-                La propuesta se encuentra en el estado "Proyectado" y está siendo revisada por el DAF.
-                Como DAF, debe revisar la proyección financiera, aprobar el resultado final o solicitar ajustes.
+                La propuesta se encuentra en el estado "Conciliado" y está siendo revisada por el Subdirector.
+                Como Subdirector, debe revisar la conciliación realizada, aprobar la proyección o solicitar ajustes si es necesario.
               </p>
             </div>
             
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
               <h4 className="font-semibold text-green-800 mb-2">Próximos Pasos</h4>
               <p className="text-green-700 text-sm">
-                Utilice las acciones disponibles arriba para finalizar el proceso de revisión financiera. 
-                Puede aprobar el resultado final o solicitar ajustes si es necesario.
+                Utilice las acciones disponibles arriba para revisar la conciliación. 
+                Puede aprobar la proyección para que continúe al estado "Proyectado" o solicitar ajustes si es necesario.
               </p>
             </div>
           </div>
@@ -196,4 +195,4 @@ const DAFProyectado = () => {
   );
 };
 
-export default DAFProyectado;
+export default SubdirectorConciliado;

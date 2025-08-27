@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha } from '../../utils/mockData';
-import { usePropuestas } from '../../context/PropuestasContext';
-import { useProgramas } from '../../context/ProgramasContext';
+import { formatearFecha, ESTADOS } from '../../../utils/mockData';
+import { usePropuestas } from '../../../context/PropuestasContext';
+import { useProgramas } from '../../../context/ProgramasContext';
 
-const DAFSDProyectado = () => {
+const DAFSDAutorizacion = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
-  const { propuestas } = usePropuestas();
+  const { propuestas, setPropuestas } = usePropuestas();
   const { programas } = useProgramas();
   const [expanded, setExpanded] = useState({}); // { [programaId]: true/false }
 
@@ -15,7 +15,7 @@ const DAFSDProyectado = () => {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
-    estado: 'proyectado',
+    estado: 'autorizacion',
     carteras: [],
     fecha_creacion: new Date(),
     fecha_actualizacion: new Date()
@@ -26,6 +26,17 @@ const DAFSDProyectado = () => {
 
   const toggleExpand = (programaId) => {
     setExpanded(prev => ({ ...prev, [programaId]: !prev[programaId] }));
+  };
+
+  const handleAutorizar = () => {
+    setPropuestas(prev =>
+      prev.map(p =>
+        p.id === propuesta.id
+          ? { ...p, estado: ESTADOS.CONCILIADO, fecha_actualizacion: new Date() }
+          : p
+      )
+    );
+    navigate('/main/propuestas', { replace: true });
   };
 
   return (
@@ -44,14 +55,14 @@ const DAFSDProyectado = () => {
               <span>Volver a Propuestas</span>
             </button>
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-medium">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-medium">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Programas Proyectados - DAF-SD</h1>
-                <p className="text-gray-600 text-sm">Estado final de programas proyectados</p>
+                <h1 className="text-2xl font-bold text-gray-800">Autorización de Programas - DAF-SD</h1>
+                <p className="text-gray-600 text-sm">Revisión final y autorización de programas</p>
               </div>
             </div>
           </div>
@@ -63,9 +74,9 @@ const DAFSDProyectado = () => {
         {/* Información de la propuesta */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
           <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-medium">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-medium">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
@@ -89,9 +100,9 @@ const DAFSDProyectado = () => {
           </div>
         </div>
 
-        {/* Grilla de programas proyectados */}
+        {/* Grilla de programas para autorización */}
         <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Programas Proyectados</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-6">Programas Pendientes de Autorización</h3>
           <div className="overflow-x-auto w-full">
             <table className="w-full divide-y divide-gray-200" style={{ tableLayout: 'fixed', width: '100%' }}>
               <colgroup>
@@ -138,7 +149,7 @@ const DAFSDProyectado = () => {
                 {programasFiltrados.map((programa) => {
                   const matriculados = programa.personas.filter(p => p.estado === 'matriculado');
                   const enRiesgo = matriculados.length < programa.minimo_apertura;
-                  const estadoPrograma = programa.cancelar ? 'Cancelado' : 'Proyectado';
+                  const estadoPrograma = programa.cancelar ? 'Cancelado' : 'Aprobado';
                   return (
                     <React.Fragment key={programa.id}>
                       <tr 
@@ -158,7 +169,7 @@ const DAFSDProyectado = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${programa.cancelar ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'}`}>
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${programa.cancelar ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                             {estadoPrograma}
                           </span>
                         </td>
@@ -185,7 +196,11 @@ const DAFSDProyectado = () => {
                                     </tr>
                                   ) : (
                                     matriculados.map((m) => (
-                                      <tr key={m.identificador}>
+                                      <tr key={m.identificador} className={
+                                        m.agregadoEnSesion || m.monto_editado_en_sesion 
+                                          ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 transition-colors' 
+                                          : ''
+                                      }>
                                         <td className="px-2 py-1 font-mono">{m.identificador}</td>
                                         <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
                                         <td className="px-2 py-1">
@@ -194,7 +209,12 @@ const DAFSDProyectado = () => {
                                         <td className="px-2 py-1">{m.moneda}</td>
                                         <td className="px-2 py-1">{m.fecha_estado}</td>
                                         <td className="px-2 py-1">
-                                          <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">Proyectado</span>
+                                          {m.agregadoEnSesion && (
+                                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Agregado en sesión</span>
+                                          )}
+                                          {m.monto_editado_en_sesion && (
+                                            <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">Monto editado</span>
+                                          )}
                                         </td>
                                       </tr>
                                     ))
@@ -213,19 +233,18 @@ const DAFSDProyectado = () => {
           </div>
         </div>
 
-        {/* Mensaje de estado final */}
-        <div className="bg-purple-50 border border-purple-200 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold text-purple-800 mb-2">Propuesta Completada</h3>
-          <p className="text-purple-600">Esta propuesta ha alcanzado su estado final de proyección.</p>
+        {/* Botón Autorizar */}
+        <div className="flex justify-end">
+          <button
+            className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-soft transition-colors duration-200 text-lg"
+            onClick={handleAutorizar}
+          >
+            Autorizar Programas
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default DAFSDProyectado;
+export default DAFSDAutorizacion;

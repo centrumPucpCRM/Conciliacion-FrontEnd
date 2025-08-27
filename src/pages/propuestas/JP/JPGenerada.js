@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { formatearFecha, obtenerColorEstado } from '../../utils/mockData';
+import { formatearFecha, obtenerColorEstado } from '../../../utils/mockData';
 
 const JPGenerada = () => {
   const navigate = useNavigate();

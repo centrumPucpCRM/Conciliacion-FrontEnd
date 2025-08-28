@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PropuestaResumen = ({ propuesta, formatearFecha, handlePreConciliar }) => {
+const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios }) => {
   if (!propuesta) return null;
 
   return (
@@ -9,7 +9,7 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handlePreConciliar }) => 
       <div className="mx-auto px-4 sm:px-6 lg:px-12">
         {/* Tarjeta */}
         <div className="mt-4 bg-white rounded-2xl shadow-soft p-4 mb-4 border border-gray-100">
-          {/* 
+          {/*
             Grilla:
             - md: 2 columnas
             - lg: 5 columnas (Carteras = 2 columnas => 40%)
@@ -29,7 +29,7 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handlePreConciliar }) => 
               </label>
             </div>
 
-            {/* Carteras (40% en lg, más espacio también en md) */}
+            {/* Carteras (40% en lg, más espacio en md) */}
             <div className="space-y-2 md:col-span-2 lg:col-span-2">
               <label className="block text-2xl font-medium text-gray-700">Carteras</label>
               <label className="text-xs text-gray-900 break-words">
@@ -37,13 +37,13 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handlePreConciliar }) => 
               </label>
             </div>
 
-            {/* Botón Pre-Conciliar (20% en lg) */}
+            {/* Botón Confirmar cambios (20% en lg) */}
             <button
               className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg shadow-soft hover:from-blue-600 hover:to-blue-700 transition 
                          justify-self-start md:justify-self-auto lg:justify-self-end self-center"
-              onClick={handlePreConciliar}
+              onClick={handleConfirmarCambios}
             >
-              Pre-Conciliar
+              Confirmar cambios
             </button>
           </div>
         </div>

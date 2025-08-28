@@ -4,6 +4,9 @@ import { formatearFecha } from '../../../utils/mockData';
 import { usePropuestas } from '../../../context/PropuestasContext';
 import { useProgramas } from '../../../context/ProgramasContext';
 import { useRole } from '../../../context/RoleContext';
+import PropuestasHeader from '../../../components/Propuestas/PropuestasHeader';
+import Resumen from '../../../components/JP/Resumen'; 
+import Tabs from '../../../components/JP/Tabs';
 
 const JPPreConciliado = () => {
   const navigate = useNavigate();
@@ -14,6 +17,8 @@ const JPPreConciliado = () => {
   const [expanded, setExpanded] = useState({}); // { [programaId]: true/false }
   const [modalAgregar, setModalAgregar] = useState({ open: false, programa: null });
   const [busqueda, setBusqueda] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState('abiertas');
   const [seleccionados, setSeleccionados] = useState([]);
   const [busquedaCRM, setBusquedaCRM] = useState('');
   const [personaCRM, setPersonaCRM] = useState(null);
@@ -315,71 +320,17 @@ const JPPreConciliado = () => {
    };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background-light via-background-subtle to-white">
+    <div>
       {/* Header */}
-      <div className="bg-white shadow-soft border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button 
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
-                onClick={() => navigate('/main/propuestas')}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Volver a Propuestas</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Preparación de Conciliación</h1>
-                <p className="text-gray-600 text-sm">Como JP, debe preparar la información para conciliación</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <PropuestasHeader titulo="Etapa : Pre-Conciliada" onBack={() => navigate('/main/propuestas')} />
+      <Resumen
+        propuesta={propuesta}
+        formatearFecha={formatearFecha}
+        handlePreConciliar={() => setShowConfirm(true)}
+      />
+      <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
       {/* Contenido principal */}
-      <div className="w-[99vw] box-border mx-auto px-6 py-8">
-        {/* Información de la propuesta */}
-        <div className="bg-white rounded-2xl shadow-soft p-8 mb-8 border border-gray-100">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-accent-orange to-accent-red rounded-xl flex items-center justify-center shadow-medium">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Información de la Propuesta</h2>
-              <p className="text-gray-600">Detalles y configuración actual</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <p className="text-sm text-gray-900">{propuesta.nombre}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Propuesta</label>
-              <p className="text-sm text-gray-900">{formatearFecha(propuesta.fecha_propuesta)}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Carteras</label>
-              <p className="text-sm text-gray-900">{propuesta.carteras.join(', ')}</p>
-            </div>
-          </div>
-        </div>
+      <div className="box-border mx-auto px-12 py-4">
 
 
 

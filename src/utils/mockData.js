@@ -82,12 +82,24 @@ export function generarPersonasPorPrograma({
     });
   }
   return personas;
-}
+  }
+  function randomFechaInaguracion() {
+    const year = 2025;
+
+    // 🔹 Mes entre 4 y 10 (abril–octubre)
+    const month = Math.floor(Math.random() * (10 - 4 + 1)) + 4; // 4–10
+    const monthIndex = month - 1; // Date usa 0–11
+
+    // 🔹 Día válido entre 1 y 28 (para evitar problemas con meses cortos)
+    const day = Math.floor(Math.random() * 28) + 1;
+
+    return new Date(year, monthIndex, day);
+  }
 
 export const generarProgramasPorCartera = (carteras) => {
   let programas = [];
   carteras.forEach(cartera => {
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       // Generar entre 0 y 5 matriculados, 1-3 interes, 1-2 proxima convocatoria
       const cantidadMatriculados = Math.floor(Math.random() * 6);
       const cantidadInteres = 1 + Math.floor(Math.random() * 3);
@@ -154,7 +166,8 @@ export const generarProgramasPorCartera = (carteras) => {
           monto_editado_por_daf: false
         });
       }
-      
+    const fechaInag = randomFechaInaguracion();
+
     programas.push({
          id: `${cartera}-${i}`,
          cartera,
@@ -165,7 +178,9 @@ export const generarProgramasPorCartera = (carteras) => {
          monto_real: montoReal,
          minimo_apertura: 3,
          cancelar: false,
-         personas: personas
+         personas: personas,
+        fecha_inaguracion: fechaInag,                  
+        mes_inaguracion: format(fechaInag, 'yyyy-MM'), 
        });
     }
   });
@@ -183,20 +198,24 @@ export const generarPropuestasPrueba = () => {
 
     const fechaPropuestaDate = i % 3 === 0 ? addDays(fechaBase, i) : subDays(fechaBase, i);
 
-    let estado = estados[i % estados.length];
+    const estado = estados[i % estados.length];
     const numCarteras = (i % CARTERAS.length) + 1;
     const carterasPropuesta = CARTERAS.slice(0, numCarteras);
 
     const nombre = `Propuesta_${i}_${fechaPropuestaDate.toLocaleDateString('es-ES')}`;
 
-    // Si está cancelado, agrega motivo_cancelacion
+    // 🔹 Nueva lógica: fecha y mes de inaguración directamente en la propuesta
+    const mes_propuesta = format(fechaPropuestaDate, 'yyyy-MM'); // p.ej. "2025-09"
+
     const propuestaObj = {
       id: uuidv4(),
       nombre,
       fecha_propuesta: fechaPropuestaDate,
-      estado: estado,
-      carteras: carterasPropuesta
+      estado,
+      carteras: carterasPropuesta,
+      mes_propuesta,
     };
+
     if (estado === ESTADOS.CANCELADO) {
       propuestaObj.motivo_cancelacion = `Motivo de cancelación ejemplo para propuesta ${i}`;
     }
@@ -206,6 +225,7 @@ export const generarPropuestasPrueba = () => {
 
   return propuestas;
 };
+
 
 // Datos de prueba para conciliaciones
 export const generarConciliacionesPrueba = () => {

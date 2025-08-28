@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 
-
-const ProgramasGrillaDAF = ({
+const ProgramasGrillaDAFRevision = ({
   programas,
   expanded,
   onToggleExpand,
@@ -9,7 +8,6 @@ const ProgramasGrillaDAF = ({
   onChangeMonto,
   onRevertMonto,
 }) => {
-
   const [selectedCarteras, setSelectedCarteras] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -40,9 +38,6 @@ const ProgramasGrillaDAF = ({
               <col style={{ width: '8%' }} />    {/* Meta Alumnos */}
               <col style={{ width: '8%' }} />    {/* Alumnos Reales */}
               <col style={{ width: '10%' }} />   {/* Monto Real */}
-              <col style={{ width: '15%' }} />    {/* Punto mínimo */}
-              <col style={{ width: '8%' }} />    {/* En riesgo */}
-              <col style={{ width: '20%' }} />   {/* No Aperturar */}
             </colgroup>
 
             <thead className="bg-gray-200 sticky top-0 z-10">
@@ -91,9 +86,6 @@ const ProgramasGrillaDAF = ({
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Meta<br/>Alumnos</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Alumnos<br/>Reales</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Monto<br/>Real</th>
-                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Punto mínimo<br/>de apertura</th>
-                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider whitespace-nowrap">En riesgo</th>
-                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">No Aperturar<br/>(DAF)</th>
               </tr>
             </thead>
 
@@ -121,28 +113,9 @@ const ProgramasGrillaDAF = ({
                       <td className="px-4 py-3 text-center text-sm text-gray-900">{programa.meta_alumnos || '0'}</td>
                       <td className="px-4 py-3 text-center text-sm text-gray-900">{programa.alumnos_reales || matriculados.length}</td>
                       <td className="px-4 py-3 text-center text-sm text-gray-900">S/ {programa.monto_real?.toLocaleString() || '0'}</td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-900">{programa.minimo_apertura}</td>
                       
 
                       
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                          enRiesgo ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                          {enRiesgo ? 'En riesgo' : 'OK'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={!!programa.cancelar}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            onToggleCancelar(programa.id);
-                          }}
-                          className="form-checkbox h-5 w-5 text-accent-orange focus:ring-accent-orange border-gray-300 rounded"
-                        />
-                      </td>
                     </tr>
 
 
@@ -229,4 +202,4 @@ const ProgramasGrillaDAF = ({
   );
 };
 
-export default ProgramasGrillaDAF;
+export default ProgramasGrillaDAFRevision;

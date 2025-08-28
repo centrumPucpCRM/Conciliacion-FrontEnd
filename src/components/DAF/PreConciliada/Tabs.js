@@ -1,11 +1,12 @@
 import React from 'react';
 
 const tabs = [
+  { id: 'solicitudes',   label: 'Solicitudes' },
   { id: 'mesConciliado', label: 'Conciliación' },
-  { id: 'mesesPasados', label: 'Revisión' }
+  { id: 'mesesPasados',  label: 'Revisión' }
 ];
 
-const PropuestasTabsDaf = ({ activeTab, onTabChange }) => {
+const Tabs = ({ activeTab, onTabChange }) => {
   return (
     <div className="px-12 mt-4">
       <div className="inline-flex  bg-white shadow-sm overflow-hidden border border-gray-200">
@@ -30,4 +31,4 @@ const PropuestasTabsDaf = ({ activeTab, onTabChange }) => {
   );
 };
 
-export default PropuestasTabsDaf;
+export default Tabs;

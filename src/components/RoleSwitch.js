@@ -35,6 +35,7 @@ const RoleSwitch = () => {
         onChange={handleRoleChange}
       >
         <option value={ROLES.ADMINISTRADOR}>Administrador</option>
+        <option value={ROLES.DAF_SD}>DAF-Subdirector</option>
         <option value={ROLES.DAF}>DAF</option>
         <option value={ROLES.JP}>JP</option>
         <option value={ROLES.SUBDIRECTOR}>Subdirector</option>

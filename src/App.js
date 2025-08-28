@@ -17,7 +17,6 @@ import JPPreConciliado from './pages/propuestas/JP/JPPreConciliado';
 import JPConciliado from './pages/propuestas/JP/JPConciliado';
 import SubdirectorPreConciliado from './pages/propuestas/SD/SubdirectorPreConciliado';
 import SubdirectorConciliado from './pages/propuestas/SD/SubdirectorConciliado';
-import VerPropuesta from './pages/VerPropuesta';
 
 // Importar nuevas pantallas DAF-SD
 import DAFSDAutorizacion from './pages/propuestas/DAF/DAF-SDAutorizacion';
@@ -65,8 +64,6 @@ function App() {
                 <Route path="/propuesta/subdirector/pre-conciliado/:propuestaId" element={<SubdirectorPreConciliado />} />
                 <Route path="/propuesta/subdirector/conciliado/:propuestaId" element={<SubdirectorConciliado />} />
                 
-                {/* Ruta para ver propuesta en modo solo lectura */}
-                <Route path="/ver-propuesta/:propuestaId" element={<VerPropuesta />} />
               </Routes>
             </div>
           </Router>

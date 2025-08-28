@@ -6,7 +6,7 @@ import {
   puedeCancelar,
   ESTADOS
 } from '../../utils/mockData';
-
+import { format } from 'date-fns';
 const TablaPropuestas = ({
   propuestas = [],
   currentRole,
@@ -97,15 +97,6 @@ const TablaPropuestas = ({
                               aria-label="Entrar a la propuesta"
                             >
                               Entrar
-                            </button>
-                          )}
-                          {tienePermiso(currentRole, estado) && onVer && (
-                            <button
-                              className="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg shadow text-xs font-semibold"
-                              onClick={() => onVer(propuesta)}
-                              aria-label="Ver propuesta"
-                            >
-                              Ver
                             </button>
                           )}
                           {onCancelar && puedeCancelar(currentRole) && estado !== ESTADOS.CANCELADO && (

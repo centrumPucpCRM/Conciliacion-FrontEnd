@@ -252,8 +252,8 @@ function SeccionTabla({
             <col style={{ width: '25%' }} /> {/* Programa */}
             <col style={{ width: '10%' }} /> {/* Fecha Inauguración */}
             <col style={{ width: '8%' }} /> {/* Meta Venta */}
-            <col style={{ width: '8%' }} /> {/* Meta Alumnos */}
-            <col style={{ width: '8%' }} /> {/* Alumnos Reales */}
+            <col style={{ width: '7%' }} /> {/* Meta Alumnos */}
+            <col style={{ width: '7%' }} /> {/* Alumnos Reales */}
             <col style={{ width: '10%' }} /> {/* Monto Real */}
             <col style={{ width: '8%' }} /> {/* Punto mínimo */}
             <col style={{ width: '7%' }} /> {/* En riesgo */}
@@ -363,7 +363,7 @@ function SeccionTabla({
 // ---------- Subcomponentes ----------
 const Th = ({ children, center = false, className = '' }) => (
   <th
-    className={`${center ? 'text-center' : 'text-left'} px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}
+    className={`${center ? 'text-center' : 'text-left'} px-4 py-3 text-xs font-medium text-gray-500 capitalize tracking-wider ${className}`}
   >
     <span className="block whitespace-normal leading-tight">{children}</span>
   </th>

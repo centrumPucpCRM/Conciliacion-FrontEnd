@@ -26,34 +26,21 @@ const PropuestasToolbar = ({
             />
           </div>
 
-          {(rangoTexto || estadosTexto || carterasTexto) && (
-            <div className="flex-1 min-w-[220px] text-sm capitalize text-blue-700 whitespace-pre-line leading-6">
-              {rangoTexto && (
-                <div>
-                  <span className="font-semibold">Fecha:</span> {rangoTexto}
-                </div>
-              )}
-              {estadosTexto && (
-                <div>
-                  <span className="font-semibold">Estados:</span> {estadosTexto}
-                </div>
-              )}
-              {carterasTexto && (
-                <div>
-                  <span className="font-semibold">Carteras:</span> {carterasTexto}
-                </div>
-              )}
-            </div>
-          )}
-
           <button
-            className="flex items-center gap-2 text-blue-700 hover:text-blue-900"
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 relative"
             onClick={onOpenBusquedaAvanzada}
           >
-            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
             </svg>
-            Búsqueda avanzada
+            <span>Búsqueda avanzada</span>
+            
+            {/* Contador de filtros activos */}
+            {(rangoTexto || estadosTexto || carterasTexto) && (
+              <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {[rangoTexto, estadosTexto, carterasTexto].filter(Boolean).length}
+              </span>
+            )}
           </button>
           {/* Botón nueva propuesta */}
           <button

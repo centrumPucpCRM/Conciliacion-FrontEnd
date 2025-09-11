@@ -1,29 +1,32 @@
 import React from 'react';
-import { ROLES, USUARIOS_JP, USUARIOS_SUBDIRECTOR } from '../utils/mockData';
+// import { ROLES } from '../utils/mockData';
 import { useRole } from '../context/RoleContext';
 
 const RoleSwitch = () => {
   const {
+    currentUser,
+    changeUser,
     currentRole,
     changeRole,
-    currentUserJP,
-    setCurrentUserJP,
-    currentUserSubdirector,
-    setCurrentUserSubdirector
+    rolesUsuarios
   } = useRole();
+
+  // Obtener el rol seleccionado desde rolesUsuarios
+  const selectedRoleObj = rolesUsuarios.find(r => r.nombre === currentRole);
+  const usuariosDelRol = selectedRoleObj ? selectedRoleObj.usuarios : [];
 
   const handleRoleChange = (e) => {
     changeRole(e.target.value);
+    // La función changeRole ya se encarga de seleccionar automáticamente 
+    // el primer usuario del nuevo rol si existe
   };
 
-  const handleJPChange = (e) => {
-    const user = USUARIOS_JP.find(jp => jp.id === e.target.value);
-    setCurrentUserJP(user);
-  };
-
-  const handleSubChange = (e) => {
-    const user = USUARIOS_SUBDIRECTOR.find(sub => sub.id === e.target.value);
-    setCurrentUserSubdirector(user);
+  // Cambiar usuario seleccionado para el rol actual
+  const handleUserChange = (e) => {
+    const user = usuariosDelRol.find(u => String(u.id_usuario) === e.target.value);
+    if (user) {
+      changeUser(user, currentRole);
+    }
   };
 
   return (
@@ -34,39 +37,26 @@ const RoleSwitch = () => {
         value={currentRole}
         onChange={handleRoleChange}
       >
-        <option value={ROLES.ADMINISTRADOR}>Administrador</option>
-        <option value={ROLES.DAF_SD}>DAF-Subdirector</option>
-        <option value={ROLES.DAF}>DAF</option>
-        <option value={ROLES.JP}>JP</option>
-        <option value={ROLES.SUBDIRECTOR}>Subdirector</option>
+        {rolesUsuarios.map(rol => (
+          <option key={rol.id_rol} value={rol.nombre}>{rol.nombre}</option>
+        ))}
       </select>
-      {currentRole === ROLES.JP && (
+      {usuariosDelRol.length > 0 && (
         <>
-          <label className="font-semibold text-gray-700"> Usuario JP: </label>
+          <label className="font-semibold text-gray-700"> Usuario: </label>
           <select
             className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
-            value={currentUserJP.id}
-            onChange={handleJPChange}
+            value={currentUser ? currentUser.id_usuario : ''}
+            onChange={handleUserChange}
           >
-            {USUARIOS_JP.map(jp => (
-              <option key={jp.id} value={jp.id}>{jp.nombre}</option>
+            {usuariosDelRol.map(u => (
+              <option key={u.id_usuario} value={u.id_usuario}>{u.nombres}</option>
             ))}
           </select>
         </>
       )}
-      {currentRole === ROLES.SUBDIRECTOR && (
-        <>
-          <label className="font-semibold text-gray-700">Usuario Subdirector:</label>
-          <select
-            className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
-            value={currentUserSubdirector.id}
-            onChange={handleSubChange}
-          >
-            {USUARIOS_SUBDIRECTOR.map(sub => (
-              <option key={sub.id} value={sub.id}>{sub.nombre}</option>
-            ))}
-          </select>
-        </>
+      {usuariosDelRol.length === 0 && (
+        <span className="ml-2 text-gray-500">No hay usuarios para este rol</span>
       )}
     </div>
   );

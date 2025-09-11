@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { CARTERAS, generarProgramasPorCartera } from '../utils/mockData';
+import { fetchCarteras, generarProgramasPorCartera } from '../utils/mockData';
 
 const ProgramasContext = createContext();
 
@@ -12,13 +12,31 @@ export const useProgramas = () => {
 };
 
 export const ProgramasProvider = ({ children }) => {
-  // Generar programas para todas las carteras actuales
-  const [programas, setProgramas] = useState(generarProgramasPorCartera(CARTERAS));
-  // Estado: { [programaId]: { [jpId]: true/false } }
+  const [programas, setProgramas] = useState([]);
   const [refutarPorJP, setRefutarPorJP] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  // Fetch carteras and generate programas when mounted
+  React.useEffect(() => {
+    let mounted = true;
+    async function fetchAndGenerate() {
+      setLoading(true);
+      try {
+        const carteras = await fetchCarteras();
+        const progs = await generarProgramasPorCartera();
+        if (mounted) setProgramas(progs);
+      } catch {
+        if (mounted) setProgramas([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    fetchAndGenerate();
+    return () => { mounted = false; };
+  }, []);
 
   return (
-    <ProgramasContext.Provider value={{ programas, setProgramas, refutarPorJP, setRefutarPorJP }}>
+    <ProgramasContext.Provider value={{ programas, setProgramas, refutarPorJP, setRefutarPorJP, loading }}>
       {children}
     </ProgramasContext.Provider>
   );

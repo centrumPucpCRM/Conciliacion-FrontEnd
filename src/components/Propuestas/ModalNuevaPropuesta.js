@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { CARTERAS, determinarEstadoInicial } from '../../utils/mockData';
+import { fetchCarteras, determinarEstadoInicial } from '../../utils/mockData';
 
 const SuccessPopup = ({ type, fechaTexto, onClose }) => {
   const isGenerada = type === 'generada';
@@ -66,6 +66,16 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
     hora: '12',
     carteras: []
   });
+  const [carterasDisponibles, setCarterasDisponibles] = useState([]);
+  const [loadingCarteras, setLoadingCarteras] = useState(true);
+  // Fetch carteras from backend on mount
+  useEffect(() => {
+    let mounted = true;
+    fetchCarteras().then(data => {
+      if (mounted) setCarterasDisponibles(data);
+    }).catch(() => setCarterasDisponibles([])).finally(() => setLoadingCarteras(false));
+    return () => { mounted = false; };
+  }, []);
 
   const [errors, setErrors] = useState({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -92,7 +102,7 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
   }, [isDropdownOpen]);
 
   // Indeterminate visual del "Seleccionar todos"
-  const allSelected = CARTERAS.length > 0 && formData.carteras.length === CARTERAS.length;
+  const allSelected = carterasDisponibles.length > 0 && formData.carteras.length === carterasDisponibles.length;
   const someSelected = formData.carteras.length > 0 && !allSelected;
   useEffect(() => {
     if (selectAllRef.current) {
@@ -130,7 +140,7 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
   const toggleAllCarteras = () => {
     setFormData((prev) => ({
       ...prev,
-      carteras: allSelected ? [] : [...CARTERAS],
+      carteras: allSelected ? [] : [...carterasDisponibles],
     }));
   };
 
@@ -249,19 +259,23 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
                   <div className="border-t border-gray-200" />
 
                   {/* Opciones individuales */}
-                  {CARTERAS.map((cartera) => (
-                    <div key={cartera} className="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors duration-200">
-                      <label className="flex items-center cursor-pointer w-full">
-                        <input
-                          type="checkbox"
-                          checked={formData.carteras.includes(cartera)}
-                          onChange={() => handleCarteraChange(cartera)}
-                          className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700">{cartera}</span>
-                      </label>
-                    </div>
-                  ))}
+                  {loadingCarteras ? (
+                    <div className="text-gray-500 text-sm px-4 py-2">Cargando carteras...</div>
+                  ) : (
+                    carterasDisponibles.map((cartera) => (
+                      <div key={cartera} className="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+                        <label className="flex items-center cursor-pointer w-full">
+                          <input
+                            type="checkbox"
+                            checked={formData.carteras.includes(cartera)}
+                            onChange={() => handleCarteraChange(cartera)}
+                            className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm text-gray-700">{cartera}</span>
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

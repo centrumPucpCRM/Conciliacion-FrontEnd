@@ -1,23 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatearFecha } from '../../../utils/mockData';
 import { usePropuestas } from '../../../context/PropuestasContext';
 import { useProgramas } from '../../../context/ProgramasContext';
+import { useRole } from '../../../context/RoleContext';
 import PropuestasHeader from '../../../components/Propuestas/PropuestasHeader';
 import PropuestaResumen from '../../../components/DAF/PreConciliada/PropuestaResumen';
 import Tabs from '../../../components/DAF/PreConciliada/Tabs';
-import SolicitudesAprobacion from '../../../components/DAF/PreConciliada/SolicitudesAprobacion';
-import Ver from '../../../components/VerPropuesta';
+import SolicitudesAprobacion from '../../../components/JP/SolicitudesAprobacion';
+import LoadingModal from '../../../components/common/LoadingModal';
+import ModalConfirmacion from '../../../components/ModalConfirmacion';
+import ProgramasGrillaJPRevision from '../../../components/DAF/PreConciliada/ProgramasGrillaDAFRevision';
+import ProgramasGrillaDAF from '../../../components/DAF/PreConciliada/ProgramasGrillaDAF';
+
 const DAFPreConciliado = () => {
   const navigate = useNavigate();
   const { propuestaId } = useParams();
   const { propuestas } = usePropuestas();
   const { programas, refutarPorJP, setRefutarPorJP, setProgramas } = useProgramas();
-  const [solicitudesAprobadas, setSolicitudesAprobadas] = useState(new Set());
+  const { currentUser, changeUser } = useRole();
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('solicitudes');
+  const [isLoading, setIsLoading] = useState(true);
+  const [expanded, setExpanded] = useState({});
+  const [selectedCarteras, setSelectedCarteras] = useState([]);
 
-  const propuesta = propuestas.find(p => p.id === propuestaId) || {
+  // Buscar la propuesta real por id - intentando con ambos formatos de ID
+  const propuesta = propuestas.find(p => 
+    String(p.id_propuesta) === String(propuestaId) || 
+    String(p.id) === String(propuestaId)
+  ) || {
     id: propuestaId,
     nombre: `Propuesta_${propuestaId}`,
     fecha_propuesta: new Date(),
@@ -27,203 +39,210 @@ const DAFPreConciliado = () => {
     fecha_actualizacion: new Date()
   };
 
-  // Filtrar programas solo de las carteras de la propuesta
-  const programasFiltrados = programas.filter(p => propuesta.carteras.includes(p.cartera));
+  // Efecto para actualizar el ID de usuario desde los parámetros de URL
+  // Usamos una ref para asegurarnos de que solo se ejecute una vez
+  const hasUpdatedUser = React.useRef(false);
 
-  // --- Construcción de solicitudes (igual que antes) ---
-  // Refutación de cancelación
-  const solicitudesRefutacion = [];
-  programasFiltrados.forEach(programa => {
-    if (programa.cancelar) {
-      Object.entries(refutarPorJP[programa.id] || {}).forEach(([jpId, refutado]) => {
-        if (refutado) {
-          solicitudesRefutacion.push({
-            id: `refutacion_${programa.id}_${jpId}`,
-            tipo: 'refutacion',
-            cartera: programa.cartera,
-            programa: programa.nombre,
-            jpId: jpId,
-            programaId: programa.id,
-            descripcion: `JP refuta la cancelación del programa ${programa.nombre}`
-          });
+  // Llamada real al backend para obtener los programas de la propuesta
+  useEffect(() => {
+    if (!propuestaId) {
+      return;
+    }
+    setIsLoading(true); // Comenzar a mostrar el estado de carga
+    const url = `http://127.0.0.1:8000/propuestas/${propuestaId}/programas`;
+    
+    fetch(url)
+      .then(res => {
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          const programasServicio = data.map(p => ({
+            ...p,
+            id: `programa-${p.nombre}`,
+            cancelar: Boolean(p.cancelar)
+          }));
+          setProgramas(programasServicio);
+        } else {
+          console.warn('Los datos recibidos no son un array:', data);
         }
+        setIsLoading(false); 
+      })
+      .catch(err => {
+        console.error('Error al obtener programas de la propuesta:', err);
+        setIsLoading(false);
       });
-    }
-  });
+  }, [propuestaId]);
 
-  // Alumnos (agregar / rechazos / contrapropuesta)
-  const solicitudesAlumnos = [];
-  programasFiltrados.forEach(programa => {
-    const alumnosAgregados = programa.personas.filter(p => p.agregadoEnSesion);
-    alumnosAgregados.forEach(alumno => {
-      solicitudesAlumnos.push({
-        id: `alumno_${programa.id}_${alumno.identificador}`,
-        tipo: 'alumno',
-        cartera: programa.cartera,
-        programa: programa.nombre,
-        programaId: programa.id,
-        alumno,
-        descripcion: `Agregar alumno ${alumno.identificador} al programa ${programa.nombre}`
-      });
+  // Filtrar para mostrar solo programas donde el id_jefe_finanzas coincide con el id_usuario del DAF actual
+  const programasFiltrados = useMemo(() => {
+    return programas;
+  }, [programas, propuesta.carteras, currentUser]);
+  
+  // Separar programas en mes conciliado (más reciente) y 3 meses anteriores
+  const [programasMesConciliado, programasResto] = useMemo(() => {
+    if (!programasFiltrados || programasFiltrados.length === 0) return [[], []];
+    // Obtener el mes más reciente (YYYY-MM)
+    const meses = programasFiltrados
+      .map(p => p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null)
+      .filter(Boolean);
+    if (meses.length === 0) return [[], []];
+    const mesMasReciente = meses.sort().reverse()[0];
+    const mesConciliado = programasFiltrados.filter(p => {
+      const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
+      return mes === mesMasReciente;
     });
-
-    const montosDafRechazados = programa.personas.filter(p => p.monto_daf_rechazado);
-    montosDafRechazados.forEach(alumno => {
-      solicitudesAlumnos.push({
-        id: `rechazo_daf_${programa.id}_${alumno.identificador}`,
-        tipo: 'solicitudDafRechazada',
-        cartera: programa.cartera,
-        programa: programa.nombre,
-        programaId: programa.id,
-        alumno,
-        descripcion: `El JP ha rechazado el monto propuesto por DAF para el alumno ${alumno.identificador}.\nMonto DAF: S/ ${alumno.monto_propuesto_daf || alumno.monto}.\nMonto JP: S/ ${alumno.monto_propuesto}`
-      });
+    const resto = programasFiltrados.filter(p => {
+      const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
+      return mes !== mesMasReciente;
     });
+    return [mesConciliado, resto];
+  }, [programasFiltrados]);
 
-    const contrapropuestasJP = programa.personas.filter(p => p.monto_contrapropuesto_por_jp);
-    contrapropuestasJP.forEach(alumno => {
-      solicitudesAlumnos.push({
-        id: `contrapropuesta_jp_${programa.id}_${alumno.identificador}`,
-        tipo: 'contrapropuestaJP',
-        cartera: programa.cartera,
-        programa: programa.nombre,
-        programaId: programa.id,
-        alumno,
-        descripcion: `El JP propone el monto S/ ${alumno.monto_propuesto} para el alumno ${alumno.identificador}`
-      });
+  // Efecto para cargar solicitudes específicas del usuario actual
+  useEffect(() => {
+    if (!currentUser || !propuestaId) {
+      return;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);    
+    const userId = urlParams.get('id_usuario') || currentUser?.id_usuario;
+    console.log("user id", userId)
+    // Si hay un ID de usuario en la URL y es diferente al actual, actualizamos el contexto
+    if (userId && userId !== currentUser.id_usuario.toString()) {
+      
+      // Crear una copia del usuario actual con el nuevo ID
+      const updatedUser = {
+        ...currentUser,
+        id_usuario: userId
+      };
+      
+      // Marcar que ya hemos actualizado el usuario para evitar bucles
+      hasUpdatedUser.current = true;
+      
+      // Actualizar el contexto con el usuario modificado
+      changeUser(updatedUser, currentUser.rol);
+    } else {
+      // Si no hay cambio que hacer, también marcamos como completado
+      hasUpdatedUser.current = true;
+    }
+    // Ya no necesitamos cargar solicitudes aquí, ya que el componente SolicitudesAprobacion lo hace internamente
+  }, [propuestaId, currentUser]);
+  
+  // Handler para manejar selección de No Aperturar
+  const handleCancelarChange = (id) => {
+    const programa = programasFiltrados.find(p => String(p.id) === String(id));
+    
+    if (!programa) {
+      console.warn(`Programa con ID ${id} no encontrado para cambiar estado cancelar`);
+      return;
+    }
+    
+    const nuevoEstado = !programa.cancelar;
+    setProgramas(prev => {
+      const updated = prev.map(p => ({
+        ...p,
+        cancelar: String(p.id) === String(id) ? nuevoEstado : p.cancelar
+      }));
+      return updated;
     });
-  });
-
-  // --- Unificar en un solo contenedor ---
-  const todasLasSolicitudes = [
-    ...solicitudesRefutacion.map(s => ({ ...s, categoria: 'Refutación' })),
-    ...solicitudesAlumnos.map(s => ({ ...s, categoria: 'Alumno' })),
-  ];
-
-  // --- Acciones (mismo comportamiento que tenías) ---
-  const handleAprobarSolicitud = (solicitudId) => {
-    setSolicitudesAprobadas(prev => new Set([...prev, solicitudId]));
-
-    if (solicitudId.startsWith('refutacion_')) {
-      const [, programaId] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => (p.id === programaId ? { ...p, cancelar: false } : p)));
-      setRefutarPorJP(prev => {
-        const next = { ...prev };
-        if (next[programaId]) delete next[programaId];
-        return next;
-      });
-    }
-
-    if (solicitudId.startsWith('alumno_')) {
-      const [, programaId, identificador] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => {
-        if (p.id !== programaId) return p;
-        return {
-          ...p,
-          personas: p.personas.map(persona =>
-            persona.identificador === identificador
-              ? { ...persona, agregadoEnSesion: false }
-              : persona
-          )
-        };
-      }));
-    }
-
-    if (solicitudId.startsWith('aceptado_daf_')) {
-      const [, , programaId, identificador] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => {
-        if (p.id !== programaId) return p;
-        return {
-          ...p,
-          personas: p.personas.map(persona =>
-            persona.identificador === identificador
-              ? { ...persona, monto_daf_aceptado_por_jp: false }
-              : persona
-          )
-        };
-      }));
-    }
-
-    if (solicitudId.startsWith('contrapropuesta_jp_')) {
-      const [, , programaId, identificador] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => {
-        if (p.id !== programaId) return p;
-        return {
-          ...p,
-          personas: p.personas.map(persona =>
-            persona.identificador === identificador
-              ? {
-                  ...persona,
-                  monto: persona.monto_propuesto,
-                  monto_inicial: persona.monto_propuesto,
-                  monto_propuesto: persona.monto_propuesto,
-                  monto_editado_en_sesion: false,
-                  monto_editado_por_jp: false,
-                  monto_editado_por_daf: false,
-                  monto_contrapropuesto_por_jp: false,
-                  monto_daf_rechazado: false
-                }
-              : persona
-          )
-        };
-      }));
-    }
-
-    if (solicitudId.startsWith('rechazo_daf_')) {
-      const [, , programaId, identificador] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => {
-        if (p.id !== programaId) return p;
-        return {
-          ...p,
-          personas: p.personas.map(persona =>
-            persona.identificador === identificador
-              ? {
-                  ...persona,
-                  monto: persona.monto_propuesto,
-                  monto_inicial: persona.monto_propuesto,
-                  monto_propuesto: persona.monto_propuesto,
-                  monto_editado_en_sesion: false,
-                  monto_editado_por_jp: false,
-                  monto_editado_por_daf: false,
-                  monto_contrapropuesto_por_jp: false,
-                  monto_daf_rechazado: false
-                }
-              : persona
-          )
-        };
-      }));
-    }
   };
 
-  const handleRechazarSolicitud = (solicitudId) => {
-    setSolicitudesAprobadas(prev => new Set([...prev, `rechazada_${solicitudId}`]));
-
-    if (solicitudId.startsWith('alumno_')) {
-      const [, programaId, identificador] = solicitudId.split('_');
-      setProgramas(prev => prev.map(p => {
+  const handleMontoPropuestoChange = (programaId, identificador, nuevoMonto) => {
+    setProgramas(prev => {
+      const updated = prev.map(p => {
         if (p.id !== programaId) return p;
         return {
           ...p,
-          personas: p.personas.map(persona =>
-            persona.identificador === identificador
-              ? {
-                  ...persona,
-                  estado: 'interes',
-                  fecha_estado: formatearFecha(new Date()),
-                  monto: '',
-                  moneda: '',
-                  agregadoEnSesion: false
-                }
-              : persona
-          )
+          oportunidades: (p.oportunidades ?? []).map(oportunidad => {
+            if (oportunidad.dni === identificador) {
+              return {
+                ...oportunidad,
+                monto_inicial: oportunidad.monto,
+                monto_propuesto: nuevoMonto,
+                monto_propuesto_daf: nuevoMonto,
+                monto_editado_en_sesion: true,
+                monto_editado_por_jp: false,
+                monto_editado_por_daf: true
+              };
+            }
+            return oportunidad;
+          })
         };
-      }));
-    }
+      });
+      return updated;
+    });
   };
 
-  const isSolicitudAprobada = (solicitudId) => solicitudesAprobadas.has(solicitudId);
-  const isSolicitudRechazada = (solicitudId) =>
-    !solicitudesAprobadas.has(solicitudId) && solicitudesAprobadas.has(`rechazada_${solicitudId}`);
+  const handleRevertirMonto = (programaId, dni) => {
+    setProgramas(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== programaId) return p;
+        return {
+          ...p,
+          oportunidades: (p.oportunidades ?? []).map(oportunidad => {
+            if (oportunidad.dni === dni) {
+              return {
+                ...oportunidad,
+                monto_propuesto: oportunidad.monto,
+                monto_propuesto_daf: oportunidad.monto,
+                monto_editado_en_sesion: false,
+                monto_editado_por_daf: false
+              };
+            }
+            return oportunidad;
+          })
+        };
+      });
+      return updated;
+    });
+  };
+
+  const toggleExpand = (programaId) => {
+    setExpanded(prev => ({ ...prev, [programaId]: !prev[programaId] }));
+  };
+  
+  // Función para manejar la confirmación de todos los cambios
+  const handleConfirmarTodosCambios = () => {
+    setShowConfirm(false);
+    setIsLoading(true);
+    
+    // Obtener el ID de usuario directamente de la URL o del contexto
+    const urlParams = new URLSearchParams(window.location.search);    
+    const userId = urlParams.get('id_usuario') || currentUser?.id_usuario;
+    
+    // Preparar datos para enviar
+    const datosAprobacion = {
+      id_propuesta: Number(propuestaId),
+      id_usuario: userId,
+      estado: 'conciliado'
+    };
+    
+    // Enviar la actualización de estado al backend
+    fetch(`http://127.0.0.1:8000/propuestas/${propuestaId}/estado`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(datosAprobacion),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      setIsLoading(false);
+      // Redirigir a la vista de propuestas
+      navigate('/main/propuestas', { replace: true });
+    })
+    .catch(error => {
+      console.error('Error al actualizar la propuesta:', error);
+      setIsLoading(false);
+      alert(`Error al actualizar la propuesta: ${error.message}`);
+    });
+  };
 
   // --- Render ---
   return (
@@ -233,29 +252,65 @@ const DAFPreConciliado = () => {
       <PropuestaResumen
         propuesta={propuesta}
         formatearFecha={formatearFecha}
-        handlePreConciliar={() => setShowConfirm(true)}
+        handleConfirmarCambios={() => setShowConfirm(true)}
       />
 
-      <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {activeTab === 'solicitudes' && (
-          <SolicitudesAprobacion
-            solicitudes={todasLasSolicitudes}
-            activeTab={activeTab}
-            onAprobar={handleAprobarSolicitud}
-            onRechazar={handleRechazarSolicitud}
-            isAprobada={isSolicitudAprobada}
-            isRechazada={isSolicitudRechazada}
-          />
-        )}
-
-        {activeTab === 'mesConciliado' && (
-          <Ver estado={activeTab}/>
-        )}
-
-        {activeTab === 'mesesPasados' && (
-          <Ver estado={activeTab}/>
-        )}
+      <Tabs 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+      />
+      
+      {/* Mostrar el modal de carga mientras isLoading es true */}
+      {isLoading ? (
+        <LoadingModal />
+      ) : (
+        <>
+          {activeTab === 'solicitudes' && (
+            <SolicitudesAprobacion 
+              propuesta={propuestaId}
+            />
+          )}
+          {activeTab === 'mesConciliado' && (
+            <ProgramasGrillaDAF 
+                  programas={programasMesConciliado}
+                  expanded={expanded}
+                  onToggleExpand={toggleExpand}
+                  onToggleCancelar={handleCancelarChange}
+                  onChangeMonto={handleMontoPropuestoChange}
+                  onRevertMonto={handleRevertirMonto}
+                  selectedCarteras={selectedCarteras}
+                  setSelectedCarteras={setSelectedCarteras}
+                  estado={activeTab}
+            />
+          )}
+          
+          {activeTab === 'mesesPasados' && (
+            <ProgramasGrillaJPRevision
+              programas={programasResto}
+              expanded={expanded}
+              onToggleExpand={toggleExpand}
+              onToggleCancelar={handleCancelarChange}
+              onChangeMonto={handleMontoPropuestoChange}
+              onRevertMonto={handleRevertirMonto}
+              selectedCarteras={selectedCarteras}
+              setSelectedCarteras={setSelectedCarteras}
+              estado={activeTab}/>
+          )}
+        </>
+      )}
+      
+      {/* Se eliminan los modales para solicitudes ya que ahora se manejan desde el componente SolicitudesAprobacion */}
+      
+      {/* Modal de confirmación para finalizar proceso completo */}
+      <ModalConfirmacion
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmarTodosCambios}
+        title="Confirmar cambios"
+        message="¿Estás seguro de que deseas confirmar todos los cambios y marcar la propuesta como conciliada? Esta acción no se puede deshacer."
+        confirmText="Confirmar cambios"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };

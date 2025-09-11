@@ -1,30 +1,32 @@
 import React from 'react';
 
-const tabs = [
-  { id: 'mesConciliado', label: 'Conciliación' },
-  { id: 'mesesPasados', label: 'Revisión' }
-];
 
-const Tabs = ({ activeTab, onTabChange }) => {
+const Tabs = ({ activeTab, onTabChange, mesConciliacion }) => {
   return (
     <div className="px-12 mt-4">
       <div className="inline-flex  bg-white shadow-sm overflow-hidden border border-gray-200">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`px-6 py-2 text-lg font-medium transition-colors focus:outline-none
-                ${isActive
-                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                  : 'text-gray-600 hover:bg-gray-50'
-                }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
+        <button
+          key="mesConciliado"
+          onClick={() => onTabChange('mesConciliado')}
+          className={`px-6 py-2 text-lg font-medium transition-colors focus:outline-none
+            ${activeTab === 'mesConciliado'
+              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:bg-gray-50'
+            }`}
+        >
+          {`Mes conciliado: ${mesConciliacion?.mesConciliado ? mesConciliacion.mesConciliado.split(' ')[0] : ''}`}
+        </button>
+        <button
+          key="mesesPasados"
+          onClick={() => onTabChange('mesesPasados')}
+          className={`px-6 py-2 text-lg font-medium transition-colors focus:outline-none
+            ${activeTab === 'mesesPasados'
+              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:bg-gray-50'
+            }`}
+        >
+          {`3 meses anteriores: ${mesConciliacion?.mesesAnteriores ? mesConciliacion.mesesAnteriores.map(m => m.split(' ')[0]).join(', ') : ''}`}
+        </button>
       </div>
     </div>
   );

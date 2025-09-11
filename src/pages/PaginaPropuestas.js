@@ -4,7 +4,8 @@ import { useRole } from '../context/RoleContext';
 import { usePropuestas } from '../context/PropuestasContext';
 import {
   ESTADOS,
-  ROLES
+  ROLES,
+  fetchMatrizPermisos
 } from '../utils/mockData';
 import ModalNuevaPropuesta from '../components/Propuestas/ModalNuevaPropuesta';
 import ModalSeleccionRol from '../components/ModalSeleccionRol';
@@ -15,9 +16,24 @@ import TablaPropuestas from '../components/Propuestas/TablaPropuestas';
 import PropuestasTabsPrincipal from '../components/Propuestas/PropuestasTabsPrincipal';
 
 const PaginaPropuestas = () => {
+  const [matrizPermisos, setMatrizPermisos] = useState(null);
+  const [loadingPermisos, setLoadingPermisos] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchMatrizPermisos().then(data => {
+      if (mounted) setMatrizPermisos(data);
+    }).catch(() => {
+      if (mounted) setMatrizPermisos(null);
+    }).finally(() => {
+      if (mounted) setLoadingPermisos(false);
+    });
+    return () => { mounted = false; };
+  }, []);
   const navigate = useNavigate();
-  const { currentRole, currentUserJP, currentUserSubdirector } = useRole();
+  const { currentUser, currentRole } = useRole();
   const { propuestas, setPropuestas } = usePropuestas();
+  // Debug: log propuestas y filtros en cada render
 
   const [propuestasFiltradas, setPropuestasFiltradas] = useState([]);
   const [filtros, setFiltros] = useState({
@@ -38,39 +54,57 @@ const PaginaPropuestas = () => {
   // Opciones de carteras para el filtro avanzado
   const todasCarteras = useMemo(() => {
     const set = new Set();
-    propuestas.forEach(p => p.carteras.forEach(c => set.add(c)));
-    return Array.from(set);
+    propuestas.forEach(p => (p.carteras || []).forEach(c => set.add(c)));
+    const arr = Array.from(set);
+    return arr;
   }, [propuestas]);
 
-  // Filtrar propuestas según el rol
+
+  //Esta funcion filtra para que los JP o subdirectores solo puedan ver las propuestas en las que estan involucrados (idealmente todos, pero flexibilidad para futuro)
   const filtrarPorRol = useCallback((propuestas) => {
-    if (currentRole === ROLES.JP && currentUserJP) {
-      return propuestas.filter(p =>
-        p.carteras.some(c => currentUserJP.carteras.includes(c))
-      );
+    if (!currentUser) {
+      return propuestas;
     }
-    if (currentRole === ROLES.SUBDIRECTOR && currentUserSubdirector) {
+    if (currentUser?.carteras?.length > 0 && 
+        (currentUser.rol === ROLES.COMERCIAL_JEFE_PRODUCTO || 
+         currentUser.rol === ROLES.COMERCIAL_SUBDIRECTOR)) {
+      const carterasUsuario = currentUser.carteras.map(c => c.nombre);
       return propuestas.filter(p =>
-        p.carteras.some(c => currentUserSubdirector.carteras.includes(c))
+        p.carteras.some(carteraPropuesta => carterasUsuario.includes(carteraPropuesta))
       );
-    }
+    }    
     return propuestas;
-  }, [currentRole, currentUserJP, currentUserSubdirector]);
+  }, [currentUser]);
 
   useEffect(() => {
     let filtradas = filtrarPorRol(propuestas);
 
-    const parseFecha = (fechaStr, endOfDay = false) => {
-      if (!fechaStr) return null;
+    const parseFecha = (fechaStr, endOfDay = false) => {      
+      if (!fechaStr) {
+        return null;
+      }
+      
       let d;
       if (typeof fechaStr === 'string') {
+        
+        // Formato ISO YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS
         if (/^\d{4}-\d{2}-\d{2}/.test(fechaStr)) {
-          const [y, m, dd] = fechaStr.split('-');
-          d = new Date(Number(y), Number(m) - 1, Number(dd));
-        } else if (/^\d{2}\/\d{2}\/\d{4}/.test(fechaStr)) {
+          // Si es ISO con tiempo (YYYY-MM-DDTHH:MM:SS), usar el constructor estándar
+          if (fechaStr.includes('T')) {
+            d = new Date(fechaStr);
+          } else {
+            // Si es sólo fecha (YYYY-MM-DD), extraer componentes
+            const [y, m, dd] = fechaStr.split('-');
+            d = new Date(Number(y), Number(m) - 1, Number(dd));
+          }
+        } 
+        // Formato DD/MM/YYYY
+        else if (/^\d{2}\/\d{2}\/\d{4}/.test(fechaStr)) {
           const [dd, m, y] = fechaStr.split('/');
           d = new Date(Number(y), Number(m) - 1, Number(dd));
-        } else {
+        } 
+        // Otros formatos (ISO completo, etc.)
+        else {
           d = new Date(fechaStr);
         }
       } else if (fechaStr instanceof Date) {
@@ -78,36 +112,58 @@ const PaginaPropuestas = () => {
       } else {
         d = new Date(fechaStr);
       }
+      
       if (endOfDay && d instanceof Date && !isNaN(d)) {
         d.setHours(23, 59, 59, 999);
       }
+      
+      if (d instanceof Date && isNaN(d.getTime())) {
+      }
+      
       return d;
     };
-
     filtradas = filtradas.filter((p) => {
-      const fechaPropuesta = p.fecha_creacion || p.fecha_propuesta;
+      const fechaPropuesta = p.creado_en;
+      
       const fechaPropuestaObj = parseFecha(fechaPropuesta);
-      if (!fechaPropuestaObj || isNaN(fechaPropuestaObj.getTime())) return false;
+      
+      // Si no hay filtro de fecha, no descartar nada
+      if (!filtros.fechaInicio && !filtros.fechaFin) {
+        return true;
+      }
+      
+      if (!fechaPropuestaObj || isNaN(fechaPropuestaObj.getTime())) {
+        return true;
+      }
 
+      let incluir = true;
+      
       if (filtros.fechaInicio) {
         const fIni = parseFecha(filtros.fechaInicio);
-        if (fIni && fechaPropuestaObj < fIni) return false;
+        if (fIni && fechaPropuestaObj < fIni) {
+          incluir = false;
+        }
       }
-      if (filtros.fechaFin) {
+      
+      if (filtros.fechaFin && incluir) {
         const fFin = parseFecha(filtros.fechaFin, true);
-        if (fFin && fechaPropuestaObj > fFin) return false;
-      }
-      return true;
+        if (fFin && fechaPropuestaObj > fFin) {
+          incluir = false;
+        }
+      }      
+      return incluir;
     });
-
     if (filtros.estados.length > 0) {
-      filtradas = filtradas.filter(p => filtros.estados.includes(p.estado));
+      filtradas = filtradas.filter(p => {
+        return filtros.estados.includes(p.estado_propuesta);
+      });
     }
 
     if (filtros.carteras.length > 0) {
-      filtradas = filtradas.filter(p =>
-        p.carteras?.some(c => filtros.carteras.includes(c))
-      );
+      filtradas = filtradas.filter(p => {
+        const match = (p.carteras || []).some(c => filtros.carteras.includes(c));
+        return match;
+      });
     }
 
     if (busquedaNombre.trim()) {
@@ -116,14 +172,14 @@ const PaginaPropuestas = () => {
     }
 
     setPropuestasFiltradas(filtradas);
-  }, [propuestas, filtros, busquedaNombre, currentRole, currentUserJP, currentUserSubdirector, filtrarPorRol]);
+  }, [propuestas, filtros, busquedaNombre, currentUser, currentRole, filtrarPorRol]);
 
   const handleNuevaPropuesta = (nuevaPropuesta) => {
     setPropuestas(prev => [nuevaPropuesta, ...prev]);
   };
 
   const handleEntrarPropuesta = (propuesta) => {
-    if (currentRole === 'administrador') {
+    if (currentRole === 'Administrador') {
       setPropuestaSeleccionada(propuesta);
       setModalSeleccionRol(true);
     } else {
@@ -137,12 +193,17 @@ const PaginaPropuestas = () => {
 
   const navegarAPropuesta = (propuesta, rol) => {
     let ruta;
-    if (rol === 'daf-sd' && propuesta.estado === ESTADOS.PRE_CONCILIADO) {
-      ruta = `/propuesta/daf-sd/pre-conciliado/${propuesta.id}`;
-    } else if (rol === 'daf-sd' && propuesta.estado === ESTADOS.AUTORIZACION) {
-      ruta = `/propuesta/daf-sd/autorizacion/${propuesta.id}`;
+    if (rol === 'DAF - Subdirector' && propuesta.estado_propuesta === ESTADOS.PRECONCILIADA) {
+      // Usar automáticamente el id_usuario del supervisor (id_usuario: 1)
+      ruta = `/propuesta/DAF - Supervisor/PRECONCILIADA/${propuesta.id_propuesta}?id_usuario=1`;
+    } else if(rol === 'DAF - Subdirector' && propuesta.estado_propuesta === ESTADOS.GENERADA){
+      // Usar automáticamente el id_usuario del supervisor (id_usuario: 1)
+      ruta = `/propuesta/DAF - Supervisor/GENERADA/${propuesta.id_propuesta}?id_usuario=1`;
+    } else if (rol === 'DAF - Subdirector' && propuesta.estado_propuesta === ESTADOS.AUTORIZACION) {
+      // Usar automáticamente el id_usuario del supervisor (id_usuario: 1)
+      ruta = `/propuesta/DAF - Supervisor/AUTORIZACION/${propuesta.id_propuesta}?id_usuario=1`;
     } else {
-      ruta = `/propuesta/${rol}/${propuesta.estado}/${propuesta.id}`;
+      ruta = `/propuesta/${rol}/${propuesta.estado_propuesta}/${propuesta.id_propuesta}`;
     }
     navigate(ruta);
   };
@@ -155,22 +216,24 @@ const PaginaPropuestas = () => {
     if (window.confirm(`¿Está seguro de que desea cancelar la propuesta "${propuesta.nombre}"?`)) {
       setPropuestas(prev =>
         prev.map(p =>
-          p.id === propuesta.id
-            ? { ...p, estado: ESTADOS.CANCELADO, fecha_actualizacion: new Date() }
+          p.id_propuesta === propuesta.id_propuesta
+            ? { ...p, estado_propuesta: 'CANCELADO', fecha_actualizacion: new Date() }
             : p
         )
       );
     }
   };
 
-  const propuestasAbiertas = propuestasFiltradas.filter(p =>
-    [ESTADOS.PROGRAMADA, ESTADOS.GENERADA, ESTADOS.PRE_CONCILIADO, ESTADOS.APROBACION].includes(p.estado)
-  );
+  // Añadir un log para depuración
+
+  const propuestasAbiertas = propuestasFiltradas.filter(p => {
+    return ['PROGRAMADA',"PRECONCILIADA", 'GENERADA', 'APROBACION'].includes(p.estado_propuesta);
+  });
   const propuestasConciliacion = propuestasFiltradas.filter(p =>
-    p.estado === ESTADOS.CONCILIACION
+    p.estado_propuesta === 'CONCILIADA'
   );
   const propuestasCanceladas = propuestasFiltradas.filter(p =>
-    p.estado === ESTADOS.CANCELADO
+    p.estado_propuesta === 'CANCELADA'
   );
 
   const formatFechaParaTexto = useCallback((v) => {
@@ -233,36 +296,49 @@ const PaginaPropuestas = () => {
 
         <PropuestasTabsPrincipal activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {activeTab === 'abiertas' && (
-          <TablaPropuestas
-            titulo="Abiertas"
-            propuestas={propuestasAbiertas}
-            currentRole={currentRole}
-            onEntrar={handleEntrarPropuesta}
-            onCancelar={handleCancelarPropuesta}
-          />
-        )}
-
-        {activeTab === 'conciliadas' && (
-          <TablaPropuestas
-            titulo="Conciliadas"
-            propuestas={propuestasConciliacion}
-            currentRole={currentRole}
-            onEntrar={handleEntrarPropuesta}
-            onVer={handleVerPropuesta}
-            onCancelar={handleCancelarPropuesta}
-          />
-        )}
-
-        {activeTab === 'canceladas' && (
-          <TablaPropuestas
-            titulo="Canceladas"
-            propuestas={propuestasCanceladas}
-            currentRole={currentRole}
-            onEntrar={handleEntrarPropuesta}
-            onVer={handleVerPropuesta}
-            showMotivoCancelacion
-          />
+        {loadingPermisos ? (
+          <div className="text-center text-gray-500 py-8">Cargando permisos...</div>
+        ) : (
+          <>
+            {activeTab === 'abiertas' && (
+              <>
+                <TablaPropuestas
+                  titulo="Abiertas"
+                  propuestas={propuestasAbiertas}
+                  currentRole={currentRole}
+                  matrizPermisos={matrizPermisos}
+                  onEntrar={handleEntrarPropuesta}
+                  onCancelar={handleCancelarPropuesta}
+                />
+              </>
+            )}
+            {activeTab === 'conciliadas' && (
+              <>
+                <TablaPropuestas
+                  titulo="Conciliadas"
+                  propuestas={propuestasConciliacion}
+                  currentRole={currentRole}
+                  matrizPermisos={matrizPermisos}
+                  onEntrar={handleEntrarPropuesta}
+                  onVer={handleVerPropuesta}
+                  onCancelar={handleCancelarPropuesta}
+                />
+              </>
+            )}
+            {activeTab === 'canceladas' && (
+              <>
+                <TablaPropuestas
+                  titulo="Canceladas"
+                  propuestas={propuestasCanceladas}
+                  currentRole={currentRole}
+                  matrizPermisos={matrizPermisos}
+                  onEntrar={handleEntrarPropuesta}
+                  onVer={handleVerPropuesta}
+                  showMotivoCancelacion
+                />
+              </>
+            )}
+          </>
         )}
 
         <ModalSeleccionRol

@@ -17,7 +17,7 @@ const Ver = ({ estado = 'mesConciliado' }) => {
   const { propuestaId } = useParams();
   const { propuestas } = usePropuestas();
   const { programas } = useProgramas();
-  const { currentRole, currentUserJP, currentUserSubdirector } = useRole();
+  const { currentUser, currentRole } = useRole();
 
   const [expanded, setExpanded] = useState(() => new Set());
 
@@ -62,15 +62,12 @@ const Ver = ({ estado = 'mesConciliado' }) => {
 
   // --- Carteras permitidas por rol (Set) ---
   const carterasPermitidasSet = useMemo(() => {
-    if (currentRole === 'JP' && currentUserJP?.carteras?.length) {
-      return new Set(currentUserJP.carteras);
-    }
-    if (currentRole === 'Subdirector' && currentUserSubdirector?.carteras?.length) {
-      return new Set(currentUserSubdirector.carteras);
+    if (currentUser?.carteras?.length) {
+      return new Set(currentUser.carteras);
     }
     // DAF/Admin ven carteras de la propuesta
     return new Set(propuesta.carteras ?? []);
-  }, [currentRole, currentUserJP, currentUserSubdirector, propuesta.carteras]);
+  }, [currentUser, propuesta.carteras]);
 
   // --- Programas dentro de la propuesta ∩ carteras permitidas ---
   const programasDePropuesta = useMemo(() => {
@@ -249,7 +246,7 @@ function SeccionTabla({
         >
           <colgroup>
             <col style={{ width: '10%' }} /> {/* Cartera */}
-            <col style={{ width: '25%' }} /> {/* Programa */}
+            <col style={{ width: '20%' }} /> {/* Programa */}
             <col style={{ width: '10%' }} /> {/* Fecha Inauguración */}
             <col style={{ width: '8%' }} /> {/* Meta Venta */}
             <col style={{ width: '7%' }} /> {/* Meta Alumnos */}

@@ -1,23 +1,23 @@
-import React from 'react';
 import {
   formatearFecha,
   obtenerColorEstado,
   tienePermiso,
   puedeCancelar,
-  ESTADOS
 } from '../../utils/mockData';
-import { format } from 'date-fns';
 const TablaPropuestas = ({
   propuestas = [],
   currentRole,
   onEntrar,
   onVer,
   onCancelar,
+  matrizPermisos,
   showMotivoCancelacion = false,
   // puedes ajustar este valor si quieres más/menos alto visible
   maxHeightClass = 'max-h-[60vh]' // ej: 'max-h-[calc(100vh-260px)]' o 'max-h-screen'
 }) => {
   const noData = !propuestas || propuestas.length === 0;
+  
+  // Log para depuración
 
   return (
     <div className="px-12">
@@ -57,10 +57,10 @@ const TablaPropuestas = ({
               <tbody className="bg-white divide-y divide-gray-400">
                 {propuestas.map((propuesta) => {
                   const nombre = propuesta?.nombre ?? '—';
-                  const fechaTxt = propuesta?.fecha_propuesta
-                    ? formatearFecha(propuesta.fecha_propuesta)
+                  const fechaTxt = propuesta?.creado_en
+                    ? formatearFecha(propuesta.creado_en)
                     : '—';
-                  const estado = propuesta?.estado ?? '—';
+                  const estado = propuesta?.estado_propuesta ?? '—';
                   const chipClase = obtenerColorEstado(estado) || '';
                   const carterasTxt = Array.isArray(propuesta?.carteras)
                     ? propuesta.carteras.join(', ')
@@ -68,7 +68,7 @@ const TablaPropuestas = ({
                   const motivoTxt = propuesta?.motivo_cancelacion ?? '—';
 
                   return (
-                    <tr key={propuesta.id} className="hover:bg-blue-50 transition-colors duration-200">
+                    <tr key={propuesta.id_propuesta} className="hover:bg-blue-50 transition-colors duration-200">
                       <td className="px-6 py-4 whitespace-nowrap text-blue-900">{nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{fechaTxt}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -90,7 +90,7 @@ const TablaPropuestas = ({
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-2">
-                          {tienePermiso(currentRole, estado) && onEntrar && (
+                          {onEntrar && tienePermiso(matrizPermisos, currentRole, estado) && (
                             <button
                               className="px-3 py-1 bg-blue-500 hover:bg-blue-700 text-white rounded-lg shadow text-xs font-semibold"
                               onClick={() => onEntrar(propuesta)}
@@ -99,7 +99,7 @@ const TablaPropuestas = ({
                               Entrar
                             </button>
                           )}
-                          {onCancelar && puedeCancelar(currentRole) && estado !== ESTADOS.CANCELADO && (
+                          {onCancelar && estado !== 'CANCELADO' && puedeCancelar(matrizPermisos, currentRole) && (
                             <button
                               className="px-3 py-1 bg-red-500 hover:bg-red-700 text-white rounded-lg shadow text-xs font-semibold"
                               onClick={() => onCancelar(propuesta)}

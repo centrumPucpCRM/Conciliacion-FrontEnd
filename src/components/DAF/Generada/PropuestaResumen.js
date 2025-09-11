@@ -25,7 +25,7 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handlePreConciliar }) => 
             <div className="space-y-2 lg:col-span-1">
               <label className="block text-2xl font-medium text-gray-700">Fecha de Propuesta</label>
               <label className="text-2xs text-gray-900">
-                {formatearFecha(propuesta.fecha_propuesta)}
+                {formatearFecha(propuesta.creado_en)}
               </label>
             </div>
 

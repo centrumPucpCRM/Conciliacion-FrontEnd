@@ -151,7 +151,7 @@ export default memo(function ModalBusquedaAvanzada({
   onApply, // opcional
 }) {
   if (!isOpen) return null;
-
+    
   // Validación de rango de fechas: permite mismo día (Desde ≤ Hasta)
   const invalidDateRange =
     filtros.fechaInicio &&

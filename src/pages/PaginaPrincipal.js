@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRole } from '../context/RoleContext';
 import { useNavigate } from 'react-router-dom';
 import MainHeader from '../components/Principal/MainHeader';
 import HomeModules from '../components/Principal/HomeModules';
@@ -18,6 +19,11 @@ const PaginaPrincipal = () => {
     return 'Buenas noches';
   };
 
+  const { currentUser, currentRole, rolesUsuarios } = useRole();
+
+  // Usar directamente el currentUser unificado
+  const usuarioActual = currentUser;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background-light via-background-subtle to-white">
       {/* Header con estilo del ejemplo (bg gris oscuro + texto blanco) */}
@@ -28,7 +34,7 @@ const PaginaPrincipal = () => {
         {/* Saludo */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            {getCurrentTime()}, USUARIO
+            {getCurrentTime()}, {rolesUsuarios.length === 0 ? 'Cargando usuario...' : (usuarioActual ? usuarioActual.nombres : 'USUARIO')}
           </h2>
           <p className="text-gray-600 text-lg">
             Seleccione el módulo que desea gestionar

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const ConfirmPreConciliarModal = ({ open, programasNoAperturar = [], onConfirm, onCancel }) => {
+const ConfirmPreConciliarModal = ({ open, programasNoAperturar = [], alumnosEditados = [], onConfirm, onCancel }) => {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === 'Escape' && onCancel?.();
@@ -13,7 +13,7 @@ const ConfirmPreConciliarModal = ({ open, programasNoAperturar = [], onConfirm, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-xl p-6 border border-red-200">
+        <div className="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6 border border-red-200">
         
         <h2 className="text-2xl font-semibold text-center text-red-700 mb-4">
           ¿Estás seguro de que quieres preconciliar?
@@ -39,12 +39,17 @@ const ConfirmPreConciliarModal = ({ open, programasNoAperturar = [], onConfirm, 
             </h3>
             <ul className="list-disc list-inside text-xs text-gray-800 space-y-1">
               {programasNoAperturar.map((p) => {
-                const enRiesgo = (p.alumnos_reales || 0) < (p.minimo_apertura || 0);
+                // Calcular alumnos reales contando las oportunidades matriculadas o cerradas
+                const matriculados = (p.oportunidades || []).filter(
+                  o => o.etapa_venta_propuesto === '3 - Matrícula' || o.etapa_venta_propuesto === '4 - Cerrada/Ganada'
+                ).length;
+                const enRiesgo = matriculados < (p.punto_minimo_apertura || 0);
+                
                 return (
                   <li key={p.id}>
                     {p.nombre} –{" "}
                     <span className={enRiesgo ? "text-red-600 font-semibold" : "text-green-600 font-semibold"}>
-                      {enRiesgo ? "En riesgo" : "Ok"}
+                      {enRiesgo ? `En riesgo` : `Ok`}
                     </span>
                   </li>
                 );
@@ -53,7 +58,29 @@ const ConfirmPreConciliarModal = ({ open, programasNoAperturar = [], onConfirm, 
           </div>
         )}
 
-
+        {/* Lista de alumnos con montos editados */}
+        {alumnosEditados && alumnosEditados.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-gray-800 mb-2">
+              Alumnos con montos editados por DAF:
+            </h3>
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="list-disc list-inside text-xs text-gray-800 space-y-1">
+                {alumnosEditados.map((alumno) => (
+                  <li key={alumno.dni || alumno.id}>
+                    {alumno.nombre || `Alumno ${alumno.dni}`} – Programa: {alumno.nombrePrograma} – 
+                    <span className="text-red-600 line-through mr-1">
+                      ${(alumno.monto_inicial || alumno.monto || 0).toLocaleString()}
+                    </span>
+                    <span className="text-green-600 font-semibold">
+                      ${(alumno.monto_propuesto || 0).toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button

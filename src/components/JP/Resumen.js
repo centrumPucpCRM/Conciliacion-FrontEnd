@@ -1,6 +1,22 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useRole } from '../../context/RoleContext';
 
 const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios }) => {
+  const { currentUser } = useRole();
+  
+  // Filtrar carteras de la propuesta para mostrar solo las del usuario actual
+  const userCarterasNames = useMemo(() => {
+    if (!currentUser?.carteras) return [];
+    return currentUser.carteras.map(c => 
+      typeof c === 'object' && c.nombre ? c.nombre : c
+    );
+  }, [currentUser]);
+  
+  const filteredCarteras = useMemo(() => {
+    if (!propuesta?.carteras || !userCarterasNames.length) return propuesta?.carteras || [];
+    return propuesta.carteras.filter(cartera => userCarterasNames.includes(cartera));
+  }, [propuesta, userCarterasNames]);
+  
   if (!propuesta) return null;
 
   return (
@@ -9,11 +25,6 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios })
       <div className="mx-auto px-4 sm:px-6 lg:px-12">
         {/* Tarjeta */}
         <div className="mt-4 bg-white rounded-2xl shadow-soft p-4 mb-4 border border-gray-100">
-          {/*
-            Grilla:
-            - md: 2 columnas
-            - lg: 5 columnas (Carteras = 2 columnas => 40%)
-          */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {/* Nombre (20% en lg) */}
             <div className="space-y-2 lg:col-span-1">
@@ -25,7 +36,7 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios })
             <div className="space-y-2 lg:col-span-1">
               <label className="block text-2xl font-medium text-gray-700">Fecha de Propuesta</label>
               <label className="text-2xs text-gray-900">
-                {formatearFecha(propuesta.fecha_propuesta)}
+                {formatearFecha(propuesta.creado_en)}
               </label>
             </div>
 
@@ -33,7 +44,9 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios })
             <div className="space-y-2 md:col-span-2 lg:col-span-2">
               <label className="block text-2xl font-medium text-gray-700">Carteras</label>
               <label className="text-xs text-gray-900 break-words">
-                {propuesta.carteras.join(', ')}
+                {filteredCarteras.length > 0 
+                  ? filteredCarteras.join(', ') 
+                  : 'No hay carteras disponibles para su usuario'}
               </label>
             </div>
 

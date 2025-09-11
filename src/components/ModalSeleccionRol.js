@@ -1,38 +1,72 @@
-import React, { useState } from 'react';
-import { ROLES, USUARIOS_JP, USUARIOS_SUBDIRECTOR } from '../utils/mockData';
+import React, { useState, useEffect } from 'react';
 import { useRole } from '../context/RoleContext';
 
 const ModalSeleccionRol = ({ isOpen, onClose, onRolSeleccionado, propuesta }) => {
   const {
-    setCurrentUserJP,
-    setCurrentUserSubdirector
+    rolesUsuarios,
+    changeUser,
+    currentUser
   } = useRole();
 
-  const [rolSeleccionado, setRolSeleccionado] = useState(ROLES.JP);
-  const [jpSeleccionado, setJPSeleccionado] = useState(USUARIOS_JP[0].id);
-  const [subSeleccionado, setSubSeleccionado] = useState(USUARIOS_SUBDIRECTOR[0].id);
+  const [rolSeleccionado, setRolSeleccionado] = useState('');
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
+  const [usuariosDelRol, setUsuariosDelRol] = useState([]);
+
+  // Establecer valores iniciales cuando el componente se monta o rolesUsuarios cambia
+  useEffect(() => {
+    if (rolesUsuarios.length > 0) {
+      // Establecer el primer rol como predeterminado si no hay uno seleccionado
+      if (!rolSeleccionado) {
+        setRolSeleccionado(rolesUsuarios[0].nombre);
+        
+        // Actualizar la lista de usuarios para el rol seleccionado
+        const usuariosRol = rolesUsuarios[0].usuarios || [];
+        setUsuariosDelRol(usuariosRol);
+        
+        // Seleccionar el primer usuario si hay alguno disponible
+        if (usuariosRol.length > 0) {
+          setUsuarioSeleccionado(String(usuariosRol[0].id_usuario));
+        }
+      }
+    }
+  }, [rolesUsuarios, rolSeleccionado]);
 
   const handleRolChange = (e) => {
-    setRolSeleccionado(e.target.value);
+    const nuevoRol = e.target.value;
+    setRolSeleccionado(nuevoRol);
+    
+    // Buscar los usuarios que corresponden a este rol
+    const rolObj = rolesUsuarios.find(r => r.nombre === nuevoRol);
+    if (rolObj && rolObj.usuarios) {
+      setUsuariosDelRol(rolObj.usuarios);
+      
+      // Seleccionar automáticamente el primer usuario
+      if (rolObj.usuarios.length > 0) {
+        setUsuarioSeleccionado(String(rolObj.usuarios[0].id_usuario));
+      } else {
+        setUsuarioSeleccionado('');
+      }
+    } else {
+      setUsuariosDelRol([]);
+      setUsuarioSeleccionado('');
+    }
   };
 
-  const handleJPChange = (e) => {
-    setJPSeleccionado(e.target.value);
-  };
-
-  const handleSubChange = (e) => {
-    setSubSeleccionado(e.target.value);
+  const handleUsuarioChange = (e) => {
+    setUsuarioSeleccionado(e.target.value);
   };
 
   const handleContinuar = () => {
-    if (rolSeleccionado === ROLES.JP) {
-      const user = USUARIOS_JP.find(jp => jp.id === jpSeleccionado);
-      setCurrentUserJP(user);
+    // Buscar el objeto de usuario basado en el ID seleccionado
+    const rolObj = rolesUsuarios.find(r => r.nombre === rolSeleccionado);
+    if (rolObj && rolObj.usuarios) {
+      const usuario = rolObj.usuarios.find(u => String(u.id_usuario) === usuarioSeleccionado);
+      if (usuario) {
+        // Utilizar la función unificada para cambiar el usuario y rol
+        changeUser(usuario, rolSeleccionado);
+      }
     }
-    if (rolSeleccionado === ROLES.SUBDIRECTOR) {
-      const user = USUARIOS_SUBDIRECTOR.find(sub => sub.id === subSeleccionado);
-      setCurrentUserSubdirector(user);
-    }
+    
     onRolSeleccionado(rolSeleccionado);
     onClose();
   };
@@ -61,39 +95,32 @@ const ModalSeleccionRol = ({ isOpen, onClose, onRolSeleccionado, propuesta }) =>
             value={rolSeleccionado}
             onChange={handleRolChange}
           >
-            <option value={ROLES.ADMINISTRADOR}>Administrador</option>
-            <option value={ROLES.DAF}>DAF</option>
-            <option value={ROLES['DAF-SD']}>DAF-SD</option>
-            <option value={ROLES.JP}>JP</option>
-            <option value={ROLES.SUBDIRECTOR}>Subdirector</option>
+            {rolesUsuarios.map(rol => (
+              <option key={rol.id_rol} value={rol.nombre}>{rol.nombre}</option>
+            ))}
           </select>
         </div>
-        {rolSeleccionado === ROLES.JP && (
+        {usuariosDelRol.length > 0 && (
           <div className="mb-4">
-            <label className="block font-semibold text-gray-700 mb-2">Seleccione el JP:</label>
+            <label className="block font-semibold text-gray-700 mb-2">
+              Seleccione el usuario:
+            </label>
             <select
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
-              value={jpSeleccionado}
-              onChange={handleJPChange}
+              value={usuarioSeleccionado}
+              onChange={handleUsuarioChange}
             >
-              {USUARIOS_JP.map(jp => (
-                <option key={jp.id} value={jp.id}>{jp.nombre}</option>
+              {usuariosDelRol.map(usuario => (
+                <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                  {usuario.nombres}
+                </option>
               ))}
             </select>
           </div>
         )}
-        {rolSeleccionado === ROLES.SUBDIRECTOR && (
-          <div className="mb-4">
-            <label className="block font-semibold text-gray-700 mb-2">Seleccione el Subdirector:</label>
-            <select
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-orange"
-              value={subSeleccionado}
-              onChange={handleSubChange}
-            >
-              {USUARIOS_SUBDIRECTOR.map(sub => (
-                <option key={sub.id} value={sub.id}>{sub.nombre}</option>
-              ))}
-            </select>
+        {usuariosDelRol.length === 0 && (
+          <div className="mb-4 text-gray-500">
+            No hay usuarios disponibles para este rol
           </div>
         )}
         <div className="flex justify-end space-x-4 mt-6">

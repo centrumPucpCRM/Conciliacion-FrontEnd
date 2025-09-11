@@ -18,8 +18,7 @@ const MainHeader = () => {
 
         {/* Derecha: “chip” TI (estilo RoleSwitch claro sobre fondo oscuro) */}
         <div className="justify-self-end">
-          <div className="bg-white text-gray-800 rounded-full px-3 py-1 shadow font-semibold text-sm">
-            USUARIO
+          <div className="">
           </div>
         </div>
       </div>

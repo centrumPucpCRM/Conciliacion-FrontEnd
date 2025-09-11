@@ -1,24 +1,30 @@
-# dependencies
+# Dependencias
 /node_modules
+/.pnp
+.pnp.js
 
-# build
-/build
+# Build output
 /dist
+/build
 
-# misc
-.DS_Store
+# Archivos de entorno
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# debug logs
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# editor
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs / Configuración local
 .vscode/
 .idea/
 *.suo
@@ -27,5 +33,8 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
-# OS
-Thumbs.db
+# Coverage y testing
+/coverage
+/.nyc_output
+
+# Archivos de lock alternativos (si solo

@@ -34,6 +34,7 @@ const PaginaPropuestas = () => {
   const { currentUser, currentRole } = useRole();
   const { propuestas, setPropuestas } = usePropuestas();
   // Debug: log propuestas y filtros en cada render
+  console.log('Usuario actual en PaginaPrincipal:', currentUser);
 
   const [propuestasFiltradas, setPropuestasFiltradas] = useState([]);
   const [filtros, setFiltros] = useState({

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-const ProgramasGrillaJP = ({
+const ProgramasGrillaDAF = ({
   programas,
   expanded,
   onToggleExpand,
@@ -175,7 +175,6 @@ const ProgramasGrillaJP = ({
               <col style={{ width: '20%' }}/>
               <col style={{ width: '1%' }}/>
               <col style={{ width: '5%' }}/>
-              // ...existing code...
               <col style={{ width: '5%' }}/>
               <col style={{ width: '1%' }}/>
               <col style={{ width: '1%' }}/>
@@ -242,9 +241,8 @@ const ProgramasGrillaJP = ({
                 const tieneAtipicoMatriculado = matriculados.some(o => o.posible_atipico);
 
                 // Usar id_programa si existe, si no, fallback a idx
-                const programaKey = programa.id_programa || programa.id || idx;
                 return (
-                  <React.Fragment key={programaKey}>
+                  <React.Fragment key={programa.id_programa}>
                     <tr
                       className={`transition-colors duration-200 ${tieneAtipicoMatriculado ? 'bg-yellow-100 hover:bg-yellow-200' : 'hover:bg-blue-50'}`}
                     >
@@ -343,9 +341,9 @@ const ProgramasGrillaJP = ({
                                           <input
                                             type="number"
                                             value={m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null ? m.monto_propuesto_daf : (m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : '')}
-                                            onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
-                                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
+                                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
                                             placeholder="0"
+                                            disabled
                                           />
                                         </td>
                                         <td className="px-2 py-1">{m.moneda}</td>
@@ -389,7 +387,7 @@ const ProgramasGrillaJP = ({
             </tbody>
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
-                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td> {/* Cartera + Programa + Fecha */}
+                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
                 <td className="px-4 py-3 text-right">
                   S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
                 </td>
@@ -407,8 +405,7 @@ const ProgramasGrillaJP = ({
                 <td className="px-4 py-3 text-right">
                   S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
                 </td>
-                <td className="px-4 py-3"></td> {/* Punto mínimo apertura */}
-                {/* Eliminado: En riesgo y No Aperturar (DAF) */}
+                <td className="px-4 py-3"></td>
               </tr>
             </tfoot>
           </table>
@@ -418,4 +415,4 @@ const ProgramasGrillaJP = ({
   );
 };
 
-export default ProgramasGrillaJP;
+export default ProgramasGrillaDAF;

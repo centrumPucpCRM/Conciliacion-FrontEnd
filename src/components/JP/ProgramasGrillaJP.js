@@ -175,7 +175,6 @@ const ProgramasGrillaJP = ({
               <col style={{ width: '20%' }}/>
               <col style={{ width: '1%' }}/>
               <col style={{ width: '5%' }}/>
-              // ...existing code...
               <col style={{ width: '5%' }}/>
               <col style={{ width: '1%' }}/>
               <col style={{ width: '1%' }}/>
@@ -242,13 +241,11 @@ const ProgramasGrillaJP = ({
                 const tieneAtipicoMatriculado = matriculados.some(o => o.posible_atipico);
 
                 // Usar id_programa si existe, si no, fallback a idx
-                const programaKey = programa.id_programa || programa.id || idx;
                 return (
-                  <React.Fragment key={programaKey}>
+                  <React.Fragment key={programa.id_programa}>
                     <tr
                       className={`transition-colors duration-200 ${tieneAtipicoMatriculado ? 'bg-yellow-100 hover:bg-yellow-200' : 'hover:bg-blue-50'}`}
                     >
-                      {/* Celdas de datos con clic para expandir */}
                       <td 
                         className="px-4 py-3 text-sm text-gray-700 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -261,7 +258,6 @@ const ProgramasGrillaJP = ({
                       >
                         {programa.nombre}
                       </td>
-                      {/* Columna Fecha de Inauguración */}
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -300,7 +296,6 @@ const ProgramasGrillaJP = ({
                       >
                         {programa.punto_minimo_apertura}
                       </td>
-                      {/* Eliminado: En riesgo y No Aperturar (DAF) */}
                     </tr>
 
                     {expanded[programa.id] && (
@@ -332,7 +327,7 @@ const ProgramasGrillaJP = ({
                                     const isEdited = m.agregadoEnSesion || (edited && Number(m.monto_propuesto_daf) !== Number(original));
                                     return (
                                       <tr
-                                        key={m.identificador || mIdx}
+                                        key={mIdx}
                                         className={m.EnSolicitud ? 'bg-yellow-200 text-gray-900' : (isEdited ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 transition-colors' : 'transition-colors')}
                                       >
                                         <td className="px-2 py-1 font-mono">{m.dni}</td>
@@ -398,9 +393,9 @@ const ProgramasGrillaJP = ({
             </tbody>
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
-                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td> {/* Cartera + Programa + Fecha */}
+                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_alumnos || 0), 0))}
@@ -414,10 +409,9 @@ const ProgramasGrillaJP = ({
                   }, 0))}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
                 </td>
-                <td className="px-4 py-3"></td> {/* Punto mínimo apertura */}
-                {/* Eliminado: En riesgo y No Aperturar (DAF) */}
+                <td className="px-4 py-3"></td>
               </tr>
             </tfoot>
           </table>

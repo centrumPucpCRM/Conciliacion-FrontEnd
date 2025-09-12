@@ -281,10 +281,10 @@ const DAFGenerada = () => {
       return {
         id_propuesta: Number(propuestaId),
         id_propuesta_oportunidad: Number(alumno.id_propuesta_oportunidad),
-        id_usuario_generador: currentUser.id_usuario,
+        id_usuario_generador: programaDelAlumno.id_jefe_producto,
         id_usuario_receptor: programaDelAlumno.id_jefe_producto,
         monto_propuesto: Number(alumno.monto_propuesto_daf),
-        monto_objetado: Number(0),
+        monto_objetado: null,
         comentario: `DAF ajustó el monto propuesto de ${alumno.monto} a ${alumno.monto_propuesto_daf}`
       };
     });
@@ -301,7 +301,7 @@ const DAFGenerada = () => {
       return {
         id_propuesta: Number(propuestaId),
         id_propuesta_programa: id_propuesta_programa,
-        id_usuario_generador: currentUser.id_usuario,
+        id_usuario_generador: programa.id_jefe_producto,
         id_usuario_receptor: programa.id_jefe_producto,
         comentario: `DAF solicitó suprimir este programa ya que no cumple el mínimo de apertura (mínimo: ${minApertura}, matriculados actuales: ${matriculados})`
       };
@@ -316,6 +316,55 @@ const DAFGenerada = () => {
     solicitudesProgramas.forEach((solicitud) => {
       const promesa = enviarSolicitudAlBackend('/solicitudes/daf/programa/exclusion', solicitud);
       promesasEnvio.push(promesa);
+    });
+    // Agrupar programas por subdireccion y enviar una sola solicitud por subdireccion
+    const subdireccionReceptores = {
+      'Grado': 46,
+      'Educacion Ejecutiva': 47,
+      'CentrumX': 48
+    };
+    // Crear un Set para trackear combinaciones únicas de subdirección-JP
+    const combinacionesUnicas = new Set();
+    
+    // Crear una solicitud por cada combinación única de subdirección y JP
+    programas.forEach(programa => {
+      if (!programa.subdireccion || !programa.id_jefe_producto) return;
+      
+      // Crear una clave única para esta combinación
+      const combinacionKey = `${programa.subdireccion}-${programa.id_jefe_producto}`;
+      
+      // Si ya procesamos esta combinación, la saltamos
+      if (combinacionesUnicas.has(combinacionKey)) return;
+      
+      const id_usuario_receptor = subdireccionReceptores[programa.subdireccion];
+      if (!id_usuario_receptor) return; // Si no hay receptor definido, omitir
+      
+      // Marcar esta combinación como procesada
+      combinacionesUnicas.add(combinacionKey);
+      
+      // Obtener el nombre del JP
+      console.log('Programa para solicitud JP:', programa);
+      const jpNombre = programa.nombre_jefe_producto || `JP ID ${programa.id_jefe_producto}`;
+      
+      // Contar cuántos programas hay para esta combinación de JP y subdirección
+      const programasDeEsteJP = programas.filter(p => 
+        p.subdireccion === programa.subdireccion && 
+        p.id_jefe_producto === programa.id_jefe_producto
+      );
+      
+      const comentario = `${programa.subdireccion} - JP: ${jpNombre} - Programas: ${programasDeEsteJP.length}`;
+      
+      const solicitud = {
+        id_propuesta: Number(propuestaId),
+        id_usuario_generador: programa.id_jefe_producto,
+        id_usuario_receptor,
+        tipo_solicitud: 'APROBACION_JP',
+        comentario,
+        valor_solicitud: 'PENDIENTE'
+      };
+      
+      console.log(solicitud);
+      promesasEnvio.push(enviarSolicitudAlBackend('/solicitudes/jp/aprobacion_subdirector', solicitud));
     });
     Promise.all(promesasEnvio)
       .then((resultados) => {
@@ -337,12 +386,14 @@ const DAFGenerada = () => {
         }
         setIsLoading(false);
         navigate('/main/propuestas', { replace: true });
+        //window.location.reload();
       })
       .catch((error) => {
         console.error('Error en el proceso de preconciliación:', error);
         setIsLoading(false);
         alert('Se produjo un error durante el proceso de preconciliación. Consulta la consola para más detalles.');
         navigate('/main/propuestas', { replace: true });
+        //window.location.reload();
       });
   };
 

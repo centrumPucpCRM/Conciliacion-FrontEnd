@@ -313,37 +313,13 @@ const JPPreConciliado = () => {
       id_usuario_generador: currentUser.id_usuario,
       id_usuario_receptor: 1,
       monto_propuesto: Number(alumno.monto_propuesto_jp),
-      monto_objetado: 0,
-      comentario: `JP ajustó el monto propuesto de ${alumno.monto} a ${alumno.monto_propuesto_jp}`
+      monto_objetado: null,
+      comentario: `${currentUser.nombres} ajustó el monto propuesto de ${alumno.monto} a ${alumno.monto_propuesto_jp}`
     }));
 
-    const promesasEnvio = solicitudesAlumnos.map(solicitud =>
+    solicitudesAlumnos.map(solicitud =>
       enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/monto/', solicitud)
     );
-
-    Promise.all(promesasEnvio)
-      .then(() => {
-        // 3. Cambiar el estado de la propuesta a revisado o aprobado
-        return fetch(`http://localhost:8000/propuesta/${propuestaId}/aprobacion`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-      })
-      .then(response => {
-        if (!response || !response.ok) {
-          console.error('Error al cambiar el estado de la propuesta a aprobación');
-        }
-        setIsLoading(false);
-        navigate('/main/propuestas', { replace: true });
-      })
-      .catch((error) => {
-        console.error('Error en el proceso de revisión:', error);
-        setIsLoading(false);
-        alert('Se produjo un error durante el proceso de revisión.');
-        navigate('/main/propuestas', { replace: true });
-      });
   };
 
 

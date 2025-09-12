@@ -159,16 +159,16 @@ const ProgramasGrillaDAF = ({
         <div>
           <table className="w-full text-sm align-top">
             <colgroup>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '20%' }}/>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '5%' }}/>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '5%' }}/>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '1%' }}/>
-              <col style={{ width: '1%' }}/>
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '1%' }} />
+              <col style={{ width: '1%' }} />
             </colgroup>
 
             <thead className="bg-gray-200 sticky top-0 z-10">
@@ -409,27 +409,19 @@ const ProgramasGrillaDAF = ({
             </tbody>
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
-                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td> {/* Cartera + Programa + Fecha */}
-                <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_alumnos || 0), 0))}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {Math.round(programasFiltrados.reduce((sum, prog) => {
-                    const matriculados = (prog.oportunidades || []).filter(
-                      p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada'
-                    );
-                    return sum + (prog.alumnos_reales || matriculados.length);
-                  }, 0))}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
-                </td>
-                <td className="px-4 py-3"></td> {/* Punto mínimo apertura */}
-                <td className="px-4 py-3"></td> {/* En riesgo */}
-                <td className="px-4 py-3"></td> {/* No Aperturar (DAF) */}
+                <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
+                <td className="px-4 py-3 text-right">S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}</td>
+                <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_alumnos || 0), 0))}</td>
+                <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => {
+                  const matriculados = (prog.oportunidades || []).filter(
+                    p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada'
+                  );
+                  return sum + (prog.alumnos_reales || matriculados.length);
+                }, 0))}</td>
+                <td className="px-4 py-3 text-right">S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}</td>
+                <td className="px-4 py-3" />
+                <td className="px-4 py-3" />
+                <td className="px-4 py-3" />
               </tr>
             </tfoot>
           </table>

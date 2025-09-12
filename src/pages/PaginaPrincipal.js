@@ -20,7 +20,6 @@ const PaginaPrincipal = () => {
   };
 
   const { currentUser, currentRole, rolesUsuarios } = useRole();
-
   // Usar directamente el currentUser unificado
   const usuarioActual = currentUser;
 

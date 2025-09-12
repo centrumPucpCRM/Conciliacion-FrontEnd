@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { format as formatDate, subMonths } from 'date-fns';
+import { es as localeEs } from 'date-fns/locale';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatearFecha } from '../../../utils/mockData';
 import { usePropuestas } from '../../../context/PropuestasContext';
@@ -6,11 +8,11 @@ import { useProgramas } from '../../../context/ProgramasContext';
 import { useRole } from '../../../context/RoleContext';
 import PropuestasHeader from '../../../components/Propuestas/PropuestasHeader';
 import PropuestaResumen from '../../../components/DAF/PreConciliada/PropuestaResumen';
-import Tabs from '../../../components/DAF/PreConciliada/Tabs';
+import Tabs from '../../../components/JP/Tabs';
 import SolicitudesAprobacion from '../../../components/JP/SolicitudesAprobacion';
 import LoadingModal from '../../../components/common/LoadingModal';
 import ModalConfirmacion from '../../../components/ModalConfirmacion';
-import ProgramasGrillaJPRevision from '../../../components/DAF/PreConciliada/ProgramasGrillaDAFRevision';
+import ProgramasGrillaDAFRevision from '../../../components/DAF/PreConciliada/ProgramasGrillaDAFRevision';
 import ProgramasGrillaDAF from '../../../components/DAF/PreConciliada/ProgramasGrillaDAF';
 
 const DAFPreConciliado = () => {
@@ -173,6 +175,25 @@ const DAFPreConciliado = () => {
       return updated;
     });
   };
+  const mesConciliacion = useMemo(() => {
+    const fechaStr = propuesta?.fecha_propuesta || propuesta?.creado_en;
+    if (fechaStr) {
+      const fecha = new Date(fechaStr);
+      if (!isNaN(fecha)) {
+        const mesConciliadoDate = subMonths(fecha, 1);
+        const mesConciliadoTexto = formatDate(mesConciliadoDate, "LLLL yyyy", { locale: localeEs });
+        const mesesAnteriores = [2, 3, 4].map(n => {
+          const d = subMonths(fecha, n);
+          return formatDate(d, "LLLL yyyy", { locale: localeEs });
+        });
+        return {
+          mesConciliado: mesConciliadoTexto.charAt(0).toUpperCase() + mesConciliadoTexto.slice(1),
+          mesesAnteriores: mesesAnteriores.map(m => m.charAt(0).toUpperCase() + m.slice(1))
+        };
+      }
+    }
+    return null;
+  }, [propuesta]);
 
   const handleRevertirMonto = (programaId, dni) => {
     setProgramas(prev => {
@@ -257,7 +278,8 @@ const DAFPreConciliado = () => {
 
       <Tabs 
         activeTab={activeTab} 
-        onTabChange={setActiveTab}
+        onTabChange={setActiveTab} 
+        mesConciliacion={mesConciliacion} 
       />
       
       {/* Mostrar el modal de carga mientras isLoading es true */}
@@ -285,7 +307,7 @@ const DAFPreConciliado = () => {
           )}
           
           {activeTab === 'mesesPasados' && (
-            <ProgramasGrillaJPRevision
+            <ProgramasGrillaDAFRevision
               programas={programasResto}
               expanded={expanded}
               onToggleExpand={toggleExpand}

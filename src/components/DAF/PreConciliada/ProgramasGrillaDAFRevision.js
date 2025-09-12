@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-const ProgramasGrillaJPRevision = ({
+const ProgramasGrillaDAFRevision = ({
   programas,
   expanded,
   onToggleExpand,
@@ -158,14 +158,14 @@ const ProgramasGrillaJPRevision = ({
         <div>
           <table className="w-full min-w-[900px] text-sm align-top">
             <colgroup>
-              <col style={{ width: '1%' }} />   {/* Mes */}
-              <col style={{ width: '1%' }} />   {/* Cartera */}
-              <col style={{ width: '20%' }} />   {/* Programa */}
-              <col style={{ width: '1%' }} />    {/* Fecha */}
-              <col style={{ width: '5%' }} />    {/* Meta Venta */}
-              <col style={{ width: '1%' }} />    {/* Meta Alumnos */}
-              <col style={{ width: '1%' }} />    {/* Alumnos Reales */}
-              <col style={{ width: '5%' }} />   {/* Monto Real */}
+              <col style={{ width: '1%' }} />{/* Mes */}
+              <col style={{ width: '1%' }} />{/* Cartera */}
+              <col style={{ width: '20%' }} />{/* Programa */}
+              <col style={{ width: '1%' }} />{/* Fecha */}
+              <col style={{ width: '5%' }} />{/* Meta Venta */}
+              <col style={{ width: '1%' }} />{/* Meta Alumnos */}
+              <col style={{ width: '1%' }} />{/* Alumnos Reales */}
+              <col style={{ width: '5%' }} />{/* Monto Real */}
             </colgroup>
 
             <thead className="bg-gray-200 sticky top-0 z-10">
@@ -252,7 +252,7 @@ const ProgramasGrillaJPRevision = ({
                   )}
                 </th>
                 <th className="px-6 py-4 text-left font-semibold text-gray-600 capitalize tracking-wider">Programa</th>
-                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Fecha<br/>Inauguración</th> {/* ← NUEVA */}
+                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Fecha<br/>Inauguración</th>
 
                 <th className="px-6 py-4 text-right font-semibold text-gray-600 capitalize tracking-wider">Meta<br/>Venta</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Meta<br/>Alumnos</th>
@@ -269,18 +269,16 @@ const ProgramasGrillaJPRevision = ({
                 const tieneAtipicoMatriculado = matriculados.some(o => o.posible_atipico);
 
                 return (
-                  <React.Fragment key={programa.id}>
+                  <React.Fragment key={programa.id_programa}>
                     <tr
                       className={`transition-colors duration-200 ${tieneAtipicoMatriculado ? 'bg-yellow-100 hover:bg-yellow-200' : 'hover:bg-blue-50'}`}
                     >
-                      {/* Nueva celda de Mes */}
                       <td 
                         className="px-4 py-3 text-sm text-gray-700 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
                         {getMes(programa)}
                       </td>
-                      {/* Celdas de datos con clic para expandir */}
                       <td 
                         className="px-4 py-3text-center text-sm text-gray-700 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -293,7 +291,6 @@ const ProgramasGrillaJPRevision = ({
                       >
                         {programa.nombre}
                       </td>
-                      {/* 🔹 Nueva columna */}
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -351,9 +348,9 @@ const ProgramasGrillaJPRevision = ({
                                     <td colSpan={8} className="text-center text-gray-500 py-2">Sin matriculados</td>
                                   </tr>
                                 ) : (
-                                  matriculados.map((m) => (
+                                  matriculados.map((m, mIdx) => (
                                     <tr
-                                      key={m.identificador}
+                                      key={mIdx}
                                       className={
                                         (() => {
                                           const base = 'transition-colors';
@@ -380,6 +377,7 @@ const ProgramasGrillaJPRevision = ({
                                           onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
                                           className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
                                           placeholder="0"
+                                          disabled
                                         />
                                       </td>
                                       <td className="px-2 py-1">{m.moneda}</td>
@@ -423,7 +421,7 @@ const ProgramasGrillaJPRevision = ({
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
                 <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
-                <td className="px-4 py-3"></td> {/* Fecha Inauguración - no se totaliza */}
+                <td className="px-4 py-3"></td>
                 <td className="px-4 py-3 text-right">
                   S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
                 </td>
@@ -439,7 +437,7 @@ const ProgramasGrillaJPRevision = ({
                   }, 0))}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
                 </td>
               </tr>
             </tfoot>
@@ -450,4 +448,4 @@ const ProgramasGrillaJPRevision = ({
   );
 };
 
-export default ProgramasGrillaJPRevision;
+export default ProgramasGrillaDAFRevision;

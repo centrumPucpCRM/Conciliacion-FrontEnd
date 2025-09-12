@@ -3,21 +3,20 @@ import { format } from 'date-fns';
 import { useRole } from '../../context/RoleContext';
 import ModalConfirmacion from '../ModalConfirmacion';
 
-  // PATCH solicitud helper
-  const patchSolicitud = async (id, body) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/solicitudes-pre-conciliacion/solicitud/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) throw new Error('Error al actualizar solicitud');
-      return await res.json();
-    } catch (e) {
-      alert('Error al actualizar solicitud');
-      return null;
-    }
-  };
+const patchSolicitud = async (id, body) => {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/solicitudes-pre-conciliacion/solicitud/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('Error al actualizar solicitud');
+    return await res.json();
+  } catch (e) {
+    alert('Error al actualizar solicitud');
+    return null;
+  }
+};
 
 const SolicitudesAprobacion = ({ propuesta }) => {
   const [solicitudesOportunidad, setSolicitudesOportunidad] = useState([]);
@@ -127,14 +126,32 @@ const SolicitudesAprobacion = ({ propuesta }) => {
 
   const handleConfirmar = async () => {
     if (!modalData) return;
-    
     // Obtener correctamente los IDs desde la estructura anidada
     const s = modalData.solicitud ? modalData.solicitud : modalData;
     const id_solicitud = s.id_solicitud;
-    
     // Para el botón Aceptar, simplificamos y solo enviamos valor_solicitud: 'ACEPTADO'
     const body = { valor_solicitud: 'ACEPTADO' };
-    
+    console.log(modalData)
+    // Si es solicitud de edición de alumno, actualizar el monto_objetado en la oportunidad antes de aceptar
+    if (modalData.solicitud.tipo_solicitud === "EDICION_ALUMNO") {
+      // Si existe monto_objetado, lo usamos, sino usamos monto_propuesto
+      console.log('Monto a actualizar en oportunidad:', s);
+      const montoActualizar = modalData.monto_objetado !== undefined && modalData.monto_objetado !== null
+        ? modalData.monto_objetado
+        : (modalData.monto_propuesto !== undefined && modalData.monto_propuesto !== null ? modalData.monto_propuesto : null);
+      console.log('Monto final a actualizar:', montoActualizar);  
+      if (montoActualizar !== null) {
+        try {
+          await fetch(`http://127.0.0.1:8000/propuesta_oportunidad/${modalData.id_propuesta_oportunidad}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto_propuesto: montoActualizar })
+          });
+        } catch (err) {
+          console.error('Error actualizando monto_propuesto en oportunidad:', err);
+        }
+      }
+    }
     await patchSolicitud(id_solicitud, body);
     handleCerrarModal();
     window.location.reload();
@@ -163,7 +180,7 @@ const SolicitudesAprobacion = ({ propuesta }) => {
             monto_objetado: Number(montoObj),
             id_usuario_generador: id_usuario_receptor,  // El receptor se convierte en generador
             id_usuario_receptor: id_usuario_generador,  // El generador se convierte en receptor
-            comentario: `El jp propone ${montoObj} sobre esta solicitud anterior\nSolicitud anterior: ${s.comentario}`
+            comentario: `El usuario ${currentUser.nombres} propone ${montoObj} sobre esta solicitud anterior. \nSolicitud anterior: ${s.comentario}`
           };
           await patchSolicitud(id_solicitud, body);
           handleCerrarModal();

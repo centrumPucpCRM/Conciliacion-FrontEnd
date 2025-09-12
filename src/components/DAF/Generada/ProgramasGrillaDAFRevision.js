@@ -273,7 +273,6 @@ const ProgramasGrillaDAFRevision = ({
                     <tr
                       className={`transition-colors duration-200 ${tieneAtipicoMatriculado ? 'bg-yellow-100 hover:bg-yellow-200' : 'hover:bg-blue-50'}`}
                     >
-                      {/* Nueva celda de Mes */}
                       <td 
                         className="px-4 py-3 text-sm text-gray-700 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -293,7 +292,6 @@ const ProgramasGrillaDAFRevision = ({
                       >
                         {programa.nombre}
                       </td>
-                      {/* 🔹 Nueva columna */}
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
@@ -423,7 +421,7 @@ const ProgramasGrillaDAFRevision = ({
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
                 <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
-                <td className="px-4 py-3"></td> {/* Fecha Inauguración - no se totaliza */}
+                <td className="px-4 py-3"></td>
                 <td className="px-4 py-3 text-right">
                   S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
                 </td>
@@ -439,7 +437,7 @@ const ProgramasGrillaDAFRevision = ({
                   }, 0))}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
                 </td>
               </tr>
             </tfoot>

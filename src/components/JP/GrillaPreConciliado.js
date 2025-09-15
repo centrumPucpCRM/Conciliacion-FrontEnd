@@ -4,7 +4,7 @@ import { useProgramas } from '../../context/ProgramasContext';
 import { useRole } from '../../context/RoleContext';
 import { formatearFecha } from '../../utils/mockData';
 
-const money = (v) => `S/ ${(v ?? 0).toLocaleString()}`;
+const money = (v) => `${(v ?? 0).toLocaleString()}`;
 
 export default function GrillaPreConciliado({ programas = [] }) {
   const { refutarPorJP, setRefutarPorJP, setProgramas } = useProgramas();

@@ -270,7 +270,7 @@ const ProgramasGrillaJP = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.meta_venta?.toLocaleString() || '0'}
+                        {programa.meta_venta?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
@@ -288,7 +288,7 @@ const ProgramasGrillaJP = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.monto_real?.toLocaleString() || '0'}
+                        {programa.monto_real?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
@@ -333,10 +333,10 @@ const ProgramasGrillaJP = ({
                                         <td className="px-2 py-1 font-mono">{m.dni}</td>
                                         <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
                                         <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
-                                        <td className="px-2 py-1"><span>S/ {m.monto}</span></td>
+                                        <td className="px-2 py-1"><span>{m.monto}</span></td>
                                         <td className="px-2 py-1">
                                           {m.EnSolicitud ? (
-                                            <span className="text-gray-600">S/ {m.monto_propuesto || m.monto}</span>
+                                            <span className="text-gray-600">{m.monto_propuesto || m.monto}</span>
                                           ) : (
                                             <input
                                               type="number"
@@ -344,6 +344,7 @@ const ProgramasGrillaJP = ({
                                               onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
                                               className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
                                               placeholder="0"
+                                              disabled={m.EnSolicitud}
                                             />
                                           )}
                                         </td>

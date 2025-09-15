@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import ModalConfirmacion from '../../ModalConfirmacion';
 
 const ProgramasGrillaDAF = ({
   programas,
@@ -15,6 +16,9 @@ const ProgramasGrillaDAF = ({
   const [localProgramas, setLocalProgramas] = useState([]);
 
   // Inicializar y actualizar localProgramas con monto_real calculado al cambiar programas
+  // Estado para el modal de becado
+  const [modalBecado, setModalBecado] = useState({ open: false, programaId: null, dni: null, alumno: null });
+
   useEffect(() => {
     if (localProgramas.length === 0) {
     // Siempre sincronizamos con los props, pero mantenemos la lógica de cálculo de monto_real
@@ -108,6 +112,27 @@ const ProgramasGrillaDAF = ({
     if (onRevertMonto) {
       onRevertMonto(programaId, dni);
     }
+  };
+
+  // Handler para suprimir alumno becado
+  const handleSuprimirBecado = () => {
+    const { programaId, dni } = modalBecado;
+    setLocalProgramas((prev) =>
+      prev.map((prog) => {
+        if (prog.id !== programaId) return prog;
+        return {
+          ...prog,
+          oportunidades: prog.oportunidades.map((o) =>
+            o.dni === dni && o.becado === true
+              ? { ...o, suprimido: true, beca_suprimida_en_sesion: true }
+              : o
+          ),
+        };
+      })
+    );
+    // Propagar el cambio al estado global de programas con la información de beca suprimida
+    onChangeMonto(programaId, dni, null, true); // Pasamos true para indicar que es una beca suprimida
+    setModalBecado({ open: false, programaId: null, dni: null, alumno: null });
   };
 
   // Handler para manejar los cambios en el checkbox de No Aperturar
@@ -264,7 +289,7 @@ const ProgramasGrillaDAF = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.meta_venta?.toLocaleString() || '0'}
+                        {programa.meta_venta?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
@@ -282,7 +307,7 @@ const ProgramasGrillaDAF = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.monto_real?.toLocaleString() || '0'}
+                        {programa.monto_real?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
@@ -347,6 +372,7 @@ const ProgramasGrillaDAF = ({
                                           const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
                                           let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
                                           if (
+                                            m.suprimido ||
                                             m.agregadoEnSesion ||
                                             (edited && Number(m.monto_propuesto_daf) !== Number(original))
                                           ) {
@@ -359,7 +385,7 @@ const ProgramasGrillaDAF = ({
                                       <td className="px-2 py-1 font-mono">{m.dni}</td>
                                       <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
                                       <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
-                                      <td className="px-2 py-1"><span>S/ {m.monto}</span></td>
+                                      <td className="px-2 py-1"><span>{m.monto}</span></td>
                                       <td className="px-2 py-1">
                                         <input
                                           type="number"
@@ -367,6 +393,7 @@ const ProgramasGrillaDAF = ({
                                           onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
                                           className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
                                           placeholder="0"
+                                          disabled={m.suprimido}
                                         />
                                       </td>
                                       <td className="px-2 py-1">{m.moneda}</td>
@@ -377,21 +404,51 @@ const ProgramasGrillaDAF = ({
                                             Agregado en sesión
                                           </span>
                                         )}
-                                        {m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && (
+                                        {(m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto) || m.suprimido ? (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
+                                              // Si está suprimido, quitar la marca de suprimido además de revertir el monto
+                                              if (m.suprimido) {
+                                                setLocalProgramas((prev) =>
+                                                  prev.map((prog) => {
+                                                    if (prog.id !== programa.id) return prog;
+                                                    return {
+                                                      ...prog,
+                                                      oportunidades: prog.oportunidades.map((o) =>
+                                                        o.dni === m.dni ? { ...o, suprimido: false } : o
+                                                      ),
+                                                    };
+                                                  })
+                                                );
+                                              }
                                               handleRevertMonto(programa.id, m.dni);
                                             }}
                                             className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
                                           >
                                             Revertir
                                           </button>
-                                        )}
+                                        ) : null}
                                         {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && (
                                           <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
                                             Atípico
                                           </span>
+                                        )}
+                                        {m.becado && (
+                                          <button
+                                            className="ml-2 text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded hover:bg-blue-300 transition-colors"
+                                            disabled={m.suprimido}
+                                            onClick={(e) => {
+                                              if (m.suprimido) return;
+                                              e.stopPropagation();
+                                              setModalBecado({ open: true, programaId: programa.id, dni: m.dni, alumno: m.alumno });
+                                            }}
+                                          >
+                                            [Becado]
+                                          </button>
+                                        )}
+                                        {m.suprimido && (
+                                          <span className="ml-2 text-xs bg-red-200 text-red-800 px-2 py-1 rounded">Suprimido</span>
                                         )}
                                       </td>
                                     </tr>
@@ -410,7 +467,7 @@ const ProgramasGrillaDAF = ({
             <tfoot className="bg-gray-200 font-semibold border-t-2 border-gray-400">
               <tr>
                 <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
-                <td className="px-4 py-3 text-right">S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}</td>
+                <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}</td>
                 <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_alumnos || 0), 0))}</td>
                 <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => {
                   const matriculados = (prog.oportunidades || []).filter(
@@ -418,7 +475,7 @@ const ProgramasGrillaDAF = ({
                   );
                   return sum + (prog.alumnos_reales || matriculados.length);
                 }, 0))}</td>
-                <td className="px-4 py-3 text-right">S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}</td>
+                <td className="px-4 py-3 text-right">{Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}</td>
                 <td className="px-4 py-3" />
                 <td className="px-4 py-3" />
                 <td className="px-4 py-3" />
@@ -427,8 +484,17 @@ const ProgramasGrillaDAF = ({
           </table>
         </div>
       </div>
+      {/* Modal para suprimir becado */}
+      <ModalConfirmacion
+        isOpen={modalBecado.open}
+        onClose={() => setModalBecado({ open: false, programaId: null, dni: null, alumno: null })}
+        onConfirm={handleSuprimirBecado}
+        title="Suprimir alumno becado"
+        message={modalBecado.alumno ? `¿Deseas suprimir a ${modalBecado.alumno} (becado) de la conciliación?` : '¿Deseas suprimir a este alumno becado de la conciliación?'}
+        confirmText="Suprimir"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };
-
 export default ProgramasGrillaDAF;

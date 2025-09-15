@@ -50,14 +50,7 @@ const PropuestaResumen = ({ propuesta, formatearFecha, handleConfirmarCambios })
               </label>
             </div>
 
-            {/* Botón Confirmar cambios (20% en lg) */}
-            <button
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg shadow-soft hover:from-blue-600 hover:to-blue-700 transition 
-                         justify-self-start md:justify-self-auto lg:justify-self-end self-center"
-              onClick={handleConfirmarCambios}
-            >
-              Confirmar cambios
-            </button>
+
           </div>
         </div>
       </div>

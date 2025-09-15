@@ -11,7 +11,7 @@ import { useProgramas } from '../context/ProgramasContext';
 import { useRole } from '../context/RoleContext';
 import { format, subMonths } from 'date-fns';
 
-const money = (v) => `S/ ${(v ?? 0).toLocaleString()}`;
+const money = (v) => `${(v ?? 0).toLocaleString()}`;
 
 const Ver = ({ estado = 'mesConciliado' }) => {
   const { propuestaId } = useParams();

@@ -131,15 +131,12 @@ const SolicitudesAprobacion = ({ propuesta }) => {
     const id_solicitud = s.id_solicitud;
     // Para el botón Aceptar, simplificamos y solo enviamos valor_solicitud: 'ACEPTADO'
     const body = { valor_solicitud: 'ACEPTADO' };
-    console.log(modalData)
     // Si es solicitud de edición de alumno, actualizar el monto_objetado en la oportunidad antes de aceptar
     if (modalData.solicitud.tipo_solicitud === "EDICION_ALUMNO") {
       // Si existe monto_objetado, lo usamos, sino usamos monto_propuesto
-      console.log('Monto a actualizar en oportunidad:', s);
       const montoActualizar = modalData.monto_objetado !== undefined && modalData.monto_objetado !== null
         ? modalData.monto_objetado
         : (modalData.monto_propuesto !== undefined && modalData.monto_propuesto !== null ? modalData.monto_propuesto : null);
-      console.log('Monto final a actualizar:', montoActualizar);  
       if (montoActualizar !== null) {
         try {
           await fetch(`http://127.0.0.1:8000/propuesta_oportunidad/${modalData.id_propuesta_oportunidad}`, {

@@ -272,7 +272,7 @@ const ProgramasGrillaDAF = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.meta_venta?.toLocaleString() || '0'}
+                        {programa.meta_venta?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
@@ -290,7 +290,7 @@ const ProgramasGrillaDAF = ({
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer" 
                         onClick={() => onToggleExpand(programa.id)}
                       >
-                        S/ {programa.monto_real?.toLocaleString() || '0'}
+                        {programa.monto_real?.toLocaleString() || '0'}
                       </td>
                       <td 
                         className="px-4 py-3 text-center text-sm text-gray-900 cursor-pointer" 
@@ -336,7 +336,7 @@ const ProgramasGrillaDAF = ({
                                         <td className="px-2 py-1 font-mono">{m.dni}</td>
                                         <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
                                         <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
-                                        <td className="px-2 py-1"><span>S/ {m.monto}</span></td>
+                                        <td className="px-2 py-1"><span>{m.monto}</span></td>
                                         <td className="px-2 py-1">
                                           <input
                                             type="number"
@@ -389,7 +389,7 @@ const ProgramasGrillaDAF = ({
               <tr>
                 <td className="px-4 py-3 text-right" colSpan={3}>Totales:</td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_venta || 0), 0)).toLocaleString()}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.meta_alumnos || 0), 0))}
@@ -403,7 +403,7 @@ const ProgramasGrillaDAF = ({
                   }, 0))}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  S/ {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
+                  {Math.round(programasFiltrados.reduce((sum, prog) => sum + (prog.monto_real || 0), 0)).toLocaleString()}
                 </td>
                 <td className="px-4 py-3"></td>
               </tr>

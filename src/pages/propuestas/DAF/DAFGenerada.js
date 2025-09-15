@@ -1,3 +1,5 @@
+
+
 // import { useConciliacion } from '../../../context/ConciliacionContext';
 import { format as formatDate, subMonths } from 'date-fns';
 import { es as localeEs } from 'date-fns/locale';
@@ -136,7 +138,18 @@ const DAFGenerada = () => {
       .filter(o => o.monto_editado_en_sesion === true || o.monto_editado_por_daf === true),
     [programas]
   );
-
+  // Alumnos becados suprimidos en sesión
+  const alumnosBecaSuprimidaEnSesion = React.useMemo(() =>
+    programas
+      .flatMap(p => (p.oportunidades || []).map(o => ({ ...o, programaId: p.id, nombrePrograma: p.nombre })))
+      .filter(o => o.beca_suprimida_en_sesion === true),
+    [programas]
+  );
+  useEffect(() => {
+    if (alumnosBecaSuprimidaEnSesion.length > 0) {
+      console.log('Alumnos con beca_suprimida_en_sesion:', alumnosBecaSuprimidaEnSesion);
+    }
+  }, [alumnosBecaSuprimidaEnSesion]);
   // Mostrar mensaje si no hay propuesta
   if (!propuesta) {
     return (
@@ -169,7 +182,7 @@ const DAFGenerada = () => {
     });
   };
 
-  const handleMontoPropuestoChange = (programaId, identificador, nuevoMonto) => {
+  const handleMontoPropuestoChange = (programaId, identificador, nuevoMonto, isBecaSuprimida = false) => {
     setProgramas(prev => {
       const updated = prev.map(p => {
         if (p.id !== programaId) return p;
@@ -177,6 +190,17 @@ const DAFGenerada = () => {
           ...p,
           oportunidades: (p.oportunidades ?? []).map(oportunidad => {
             if (oportunidad.dni === identificador) {
+              if (isBecaSuprimida) {
+                // Si es una supresión de beca, solo marcar flags de supresión, NO de edición de monto
+                return {
+                  ...oportunidad,
+                  suprimido: true,
+                  beca_suprimida_en_sesion: true,
+                  monto_editado_en_sesion: false,
+                  monto_editado_por_daf: false
+                };
+              }
+              // Caso normal de edición de monto
               return {
                 ...oportunidad,
                 monto_inicial: oportunidad.monto,
@@ -208,7 +232,9 @@ const DAFGenerada = () => {
                 monto_propuesto: oportunidad.monto,
                 monto_propuesto_daf: oportunidad.monto,
                 monto_editado_en_sesion: false,
-                monto_editado_por_daf: false
+                monto_editado_por_daf: false,
+                suprimido: false, // Revertir la supresión
+                beca_suprimida_en_sesion: false // Revertir la marca de beca suprimida
               };
             }
             return oportunidad;
@@ -248,23 +274,45 @@ const DAFGenerada = () => {
   };
 
   const handleConfirmPreconciliar = async () => {
-  // Mostrar en consola las oportunidades afectadas (alumnos editados)
-    // Actualizar monto_propuesto en backend para cada oportunidad editada
-    await Promise.all(alumnosEditados.map(async (alumno) => {
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/propuesta_oportunidad/${alumno.id_propuesta_oportunidad}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ monto_propuesto: alumno.monto_propuesto_daf })
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Error actualizando monto_propuesto para oportunidad ${alumno.id_propuesta_oportunidad}:`, errorText);
+    // Actualizar monto_propuesto y etapa_venta_propuesto para alumnos editados y becados suprimidos
+    const actualizaciones = [
+      // Actualizar montos propuestos
+      ...alumnosEditados.map(async (alumno) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/propuesta_oportunidad/${alumno.id_propuesta_oportunidad}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto_propuesto: alumno.monto_propuesto_daf })
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error actualizando monto_propuesto para oportunidad ${alumno.id_propuesta_oportunidad}:`, errorText);
+          }
+        } catch (err) {
+          console.error(`Error de red actualizando oportunidad ${alumno.id_propuesta_oportunidad}:`, err);
         }
-      } catch (err) {
-        console.error(`Error de red actualizando oportunidad ${alumno.id_propuesta_oportunidad}:`, err);
-      }
-    }));
+      }),
+      // Actualizar etapa_venta_propuesto para becados suprimidos
+      ...alumnosBecaSuprimidaEnSesion.map(async (alumno) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/propuesta_oportunidad/${alumno.id_propuesta_oportunidad}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              etapa_venta_propuesto: "Alumno Becado",
+            })
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error actualizando etapa_venta_propuesto para becado ${alumno.id_propuesta_oportunidad}:`, errorText);
+          }
+        } catch (err) {
+          console.error(`Error de red actualizando becado ${alumno.id_propuesta_oportunidad}:`, err);
+        }
+      })
+    ];
+
+    await Promise.all(actualizaciones);
     // Antes de enviar, actualizar monto_propuesto con monto_propuesto_daf en los alumnos editados
     setProgramas(prev => prev.map(p => ({
       ...p,
@@ -276,16 +324,30 @@ const DAFGenerada = () => {
     })));
 
     // Preparamos los datos para enviar a la API
-    const solicitudesAlumnos = alumnosEditados.map(alumno => {
+
+    // Solicitudes para alumnos editados (endpoint /monto)
+    const solicitudesAlumnosEditados = alumnosEditados.map(alumno => {
       const programaDelAlumno = programas.find(p => p.id === alumno.programaId);
       return {
         id_propuesta: Number(propuestaId),
         id_propuesta_oportunidad: Number(alumno.id_propuesta_oportunidad),
-        id_usuario_generador: programaDelAlumno.id_jefe_producto,
+        id_usuario_generador: currentUser.id_usuario,
         id_usuario_receptor: programaDelAlumno.id_jefe_producto,
         monto_propuesto: Number(alumno.monto_propuesto_daf),
         monto_objetado: null,
         comentario: `DAF ajustó el monto propuesto de ${alumno.monto} a ${alumno.monto_propuesto_daf}`
+      };
+    });
+
+    // Solicitudes para becados suprimidos (endpoint /becado)
+    const solicitudesAlumnosBecados = alumnosBecaSuprimidaEnSesion.map(alumno => {
+      const programaDelAlumno = programas.find(p => p.id === alumno.programaId);
+      return {
+        id_propuesta: Number(propuestaId),
+        id_propuesta_oportunidad: Number(alumno.id_propuesta_oportunidad),
+        id_usuario_generador: currentUser.id_usuario,
+        id_usuario_receptor: programaDelAlumno.id_jefe_producto,
+        comentario: `DAF suprimió al alumno becado ${alumno.alumno || alumno.dni}`
       };
     });
 
@@ -301,16 +363,21 @@ const DAFGenerada = () => {
       return {
         id_propuesta: Number(propuestaId),
         id_propuesta_programa: id_propuesta_programa,
-        id_usuario_generador: programa.id_jefe_producto,
+        id_usuario_generador: currentUser.id_usuario,
         id_usuario_receptor: programa.id_jefe_producto,
         comentario: `DAF solicitó suprimir este programa ya que no cumple el mínimo de apertura (mínimo: ${minApertura}, matriculados actuales: ${matriculados})`
       };
     });
     setIsLoading(true);
-
     const promesasEnvio = [];
-    solicitudesAlumnos.forEach((solicitud) => {
-      const promesa = enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/monto/', solicitud);
+    // Enviar solicitudes de alumnos editados por /monto
+    solicitudesAlumnosEditados.forEach((solicitud) => {
+      const promesa = enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/monto', solicitud);
+      promesasEnvio.push(promesa);
+    });
+    // Enviar solicitudes de becados suprimidos por /becado
+    solicitudesAlumnosBecados.forEach((solicitud) => {
+      const promesa = enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/becado', solicitud);
       promesasEnvio.push(promesa);
     });
     solicitudesProgramas.forEach((solicitud) => {
@@ -386,14 +453,14 @@ const DAFGenerada = () => {
         }
         setIsLoading(false);
         navigate('/main/propuestas', { replace: true });
-        //window.location.reload();
+        window.location.reload();
       })
       .catch((error) => {
         console.error('Error en el proceso de preconciliación:', error);
         setIsLoading(false);
         alert('Se produjo un error durante el proceso de preconciliación. Consulta la consola para más detalles.');
         navigate('/main/propuestas', { replace: true });
-        //window.location.reload();
+        window.location.reload();
       });
   };
 

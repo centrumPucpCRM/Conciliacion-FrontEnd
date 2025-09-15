@@ -158,10 +158,10 @@ const DAFSDAutorizacion = () => {
                       >
                         <td className="px-4 py-3 text-sm text-gray-700">{programa.cartera}</td>
                         <td className="px-4 py-3 text-sm text-gray-900 leading-relaxed">{programa.nombre}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">S/ {programa.meta_venta?.toLocaleString() || '0'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">{programa.meta_venta?.toLocaleString() || '0'}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">{programa.meta_alumnos || '0'}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">{programa.alumnos_reales || matriculados.length}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">S/ {programa.monto_real?.toLocaleString() || '0'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">{programa.monto_real?.toLocaleString() || '0'}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900">{programa.minimo_apertura}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
                           <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${enRiesgo ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
@@ -204,7 +204,7 @@ const DAFSDAutorizacion = () => {
                                         <td className="px-2 py-1 font-mono">{m.identificador}</td>
                                         <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
                                         <td className="px-2 py-1">
-                                          <span>S/ {m.monto}</span>
+                                          <span>{m.monto}</span>
                                         </td>
                                         <td className="px-2 py-1">{m.moneda}</td>
                                         <td className="px-2 py-1">{m.fecha_estado}</td>

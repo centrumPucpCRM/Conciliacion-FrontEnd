@@ -25,7 +25,9 @@ const JPPreConciliado = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCarteras, setSelectedCarteras] = useState([]);
+  const [todasAprobacionJPAbiertas, setTodasAprobacionJPAbiertas] = useState(false);
   const { currentUser } = useRole();
+  //Aca llama a ese enpoint que creaste y que si esta todas las ocliidutdes de ese tipo abiertas llene un true a un state
 
   // Buscar la propuesta real por id - intentando con ambos formatos de ID
   const propuesta = propuestas.find(p => 
@@ -92,7 +94,7 @@ const JPPreConciliado = () => {
             cancelar: Boolean(p.cancelar)
           }));
 
-          console.log(programasServicio);
+
           const programasFiltrados = programasServicio.filter(p => p.id_jefe_producto == currentUser.id_usuario);
           
           // Marcar oportunidades que tienen solicitudes pendientes o rechazadas
@@ -101,12 +103,13 @@ const JPPreConciliado = () => {
             const programaConSolicitudes = {
               ...programa,
               oportunidades: programa.oportunidades ? programa.oportunidades.map(oportunidad => {
-                // Buscar si esta oportunidad tiene una solicitud
+                // Buscar si esta oportunidad tiene una solicitud PENDIENTE o PENDIENTE A REVISION
                 const solicitudRelacionada = solicitudesOportunidad.find(
                   s => s.dni_alumno === oportunidad.dni && 
-                       (s.solicitud && s.solicitud.valor_solicitud !== 'ACEPTADO')
+                       (s.solicitud && 
+                         (s.solicitud.valor_solicitud === 'PENDIENTE' || s.solicitud.valor_solicitud === 'PENDIENTE A REVISION' || s.solicitud.valor_solicitud === 'RECHAZADO')
+                       )
                 );
-                
                 return {
                   ...oportunidad,
                   EnSolicitud: !!solicitudRelacionada
@@ -116,7 +119,6 @@ const JPPreConciliado = () => {
             return programaConSolicitudes;
           });
           
-          console.log("Programas con EnSolicitud marcado:", programasConSolicitudes);
           setProgramas(programasConSolicitudes);
         } else {
           console.warn('Los datos recibidos no son un array:', data);
@@ -134,7 +136,6 @@ const JPPreConciliado = () => {
   
   // Separar programas en mes conciliado (más reciente) y 3 meses anteriores
   const [programasMesConciliado, programasResto] = useMemo(() => {
-    console.log("Programas filtrados", programasFiltrados);
     if (!programasFiltrados || programasFiltrados.length === 0) return [[], []];
     // Obtener el mes más reciente (YYYY-MM)
     const meses = programasFiltrados
@@ -180,6 +181,34 @@ const JPPreConciliado = () => {
       .flatMap(p => (p.oportunidades ?? []).map(o => ({ ...o, programaId: p.id, nombrePrograma: p.nombre })))
       .filter(o => o.monto_editado_en_sesion === true || o.monto_editado_por_jp === true);
   }, [programasFiltrados]);
+
+
+
+
+  // Verificar si todas las solicitudes APROBACION_JP del usuario están abiertas
+  useEffect(() => {
+    if (!currentUser) return;
+    const checkSolicitudesAbiertas = async () => {
+      try {
+        // Llama al endpoint GET para obtener todas las solicitudes APROBACION_JP del usuario
+        const resp = await fetch(`http://localhost:8000/solicitud/aprobacion_jp/usuario/${currentUser.id_usuario}`);
+        if (!resp.ok) throw new Error(`Error HTTP: ${resp.status}`);
+        const solicitudes = await resp.json();
+        // Si todas están abiertas (abierta === true), setear true
+        if (Array.isArray(solicitudes) && solicitudes.length > 0) {
+          const todasAbiertas = solicitudes.every(s => s.abierta === true);
+          console.log('Todas las solicitudes APROBACION_JP están abiertas:', todasAbiertas,solicitudes);
+          setTodasAprobacionJPAbiertas(todasAbiertas);
+        } else {
+          setTodasAprobacionJPAbiertas(false);
+        }
+      } catch (err) {
+        console.error('Error al verificar solicitudes APROBACION_JP:', err);
+        setTodasAprobacionJPAbiertas(false);
+      }
+    };
+    checkSolicitudesAbiertas();
+  }, [currentUser]);
 
   // Mostrar mensaje si no hay propuesta
   if (!propuesta) {
@@ -317,10 +346,55 @@ const JPPreConciliado = () => {
       comentario: `${currentUser.nombres} ajustó el monto propuesto de ${alumno.monto} a ${alumno.monto_propuesto_jp}`
     }));
 
-    solicitudesAlumnos.map(solicitud =>
-      enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/monto/', solicitud)
+    // Esperar a que todas las solicitudes sean creadas antes de consultar
+    await Promise.all(
+      solicitudesAlumnos.map(solicitud =>
+        enviarSolicitudAlBackend('/solicitudes/daf/oportunidad/monto/', solicitud)
+      )
     );
+    // Ahora consultar las solicitudes del usuario para esta propuesta
+    try {
+      const urlSolicitudes = `http://localhost:8000/solicitudes-pre-conciliacion/propuesta/${propuestaId}/usuario/${currentUser.id_usuario}`;
+      const resp = await fetch(urlSolicitudes);
+      if (!resp.ok) throw new Error(`Error HTTP: ${resp.status}`);
+      const data = await resp.json();
+      const solicitudesOportunidad = Array.isArray(data.solicitudesPropuestaOportunidad) ? data.solicitudesPropuestaOportunidad : [];
+      const solicitudesPrograma = Array.isArray(data.solicitudesPropuestaPrograma) ? data.solicitudesPropuestaPrograma : [];
+      const todasSolicitudes = [...solicitudesOportunidad, ...solicitudesPrograma];
+      // Filtrar las que no están aceptadas y no son de tipo ELIMINACION_BECADO
+      const noAceptadas = todasSolicitudes.filter(s =>
+        s.solicitud &&
+        s.solicitud.valor_solicitud !== 'ACEPTADO' &&
+        s.solicitud.tipo_solicitud !== 'ELIMINACION_BECADO'
+      );
+      if (noAceptadas.length > 0) {
+        console.log('Solicitudes pendientes o rechazadas (excluyendo ELIMINACION_BECADO):', noAceptadas);
+      } else {
+        console.log('Todas aceptadas y listado:', todasSolicitudes);
+        // Si todas están aceptadas, cerrar las solicitudes APROBACION_JP del usuario
+        try {
+          const cerrarResp = await fetch(`http://localhost:8000/solicitud/aprobacion_jp/usuario/${currentUser.id_usuario}/cerrar`, {
+            method: 'PATCH'
+          });
+          if (!cerrarResp.ok) {
+            const cerrarText = await cerrarResp.text();
+            console.error('Error al cerrar solicitudes APROBACION_JP:', cerrarText);
+          } else {
+            console.log('Solicitudes APROBACION_JP cerradas correctamente');
+          }
+        } catch (cerrarErr) {
+          console.error('Error al cerrar solicitudes APROBACION_JP:', cerrarErr);
+        }
+      }
+    } catch (err) {
+      console.error('Error al verificar estado de solicitudes:', err);
+    }
+    setIsLoading(false);
+    window.location.reload();
+    //Ahora a todas las solicitudes del usuario
   };
+
+
 
 
   return (
@@ -331,6 +405,7 @@ const JPPreConciliado = () => {
         propuesta={propuesta}
         formatearFecha={formatearFecha}
         handleConfirmarCambios={handleConfirmRevisado}
+        todasAprobacionJPAbiertas={todasAprobacionJPAbiertas}
       />
 
       <Tabs 

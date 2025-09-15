@@ -79,7 +79,7 @@ const DAFPreConciliado = () => {
   // Filtrar para mostrar solo programas donde el id_jefe_finanzas coincide con el id_usuario del DAF actual
   const programasFiltrados = useMemo(() => {
     return programas;
-  }, [programas, propuesta.carteras, currentUser]);
+  }, [programas, propuesta.carteras]);
   
   // Separar programas en mes conciliado (más reciente) y 3 meses anteriores
   const [programasMesConciliado, programasResto] = useMemo(() => {
@@ -129,7 +129,7 @@ const DAFPreConciliado = () => {
       hasUpdatedUser.current = true;
     }
     // Ya no necesitamos cargar solicitudes aquí, ya que el componente SolicitudesAprobacion lo hace internamente
-  }, [propuestaId, currentUser]);
+  }, [propuestaId]);
   
   // Handler para manejar selección de No Aperturar
   const handleCancelarChange = (id) => {

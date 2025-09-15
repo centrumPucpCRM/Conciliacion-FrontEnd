@@ -1,119 +1,341 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+  import React, { useState, useMemo, useEffect } from 'react';
+import { format as formatDate, subMonths } from 'date-fns';
+import { es as localeEs } from 'date-fns/locale';
+import { useNavigate, useParams } from 'react-router-dom';
+import { formatearFecha } from '../../../utils/mockData';
+import { usePropuestas } from '../../../context/PropuestasContext';
+import { useProgramas } from '../../../context/ProgramasContext';
 import { useRole } from '../../../context/RoleContext';
+import PropuestasHeader from '../../../components/Propuestas/PropuestasHeader';
+import PropuestaResumen from '../../../components/DAF/PreConciliada/PropuestaResumen';
+import Tabs from '../../../components/JP/Tabs';
+import SolicitudesAprobacion from '../../../components/SD/SolicitudesAprobacion';
+import LoadingModal from '../../../components/common/LoadingModal';
+import ModalConfirmacion from '../../../components/ModalConfirmacion';
+import ProgramasGrillaDAFRevision from '../../../components/DAF/PreConciliada/ProgramasGrillaDAFRevision';
+import ProgramasGrillaDAF from '../../../components/DAF/PreConciliada/ProgramasGrillaDAF';
 
-const statusColors = {
-  PENDIENTE: 'bg-yellow-100 text-yellow-800',
-  APROBADO: 'bg-green-100 text-green-800',
-  RECHAZADO: 'bg-red-100 text-red-800',
-  default: 'bg-gray-100 text-gray-800',
-};
-
-function StatusBadge({ status }) {
-  const color = statusColors[status?.toUpperCase()] || statusColors.default;
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${color}`}>{status}</span>
-  );
-}
-
-function Card({ children }) {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-5 mb-4 border border-gray-100 hover:shadow-lg transition-shadow">
-      {children}
-    </div>
-  );
-}
-
-const SubdirectorPreConciliado = () => {
+const DAFPreConciliado = () => {
+  const navigate = useNavigate();
   const { propuestaId } = useParams();
-  const { currentUser } = useRole();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [solicitudesOportunidad, setSolicitudesOportunidad] = useState([]);
-  const [solicitudesPrograma, setSolicitudesPrograma] = useState([]);
-  const [solicitudesGenerales, setSolicitudesGenerales] = useState([]);
+  const { propuestas } = usePropuestas();
+  const { programas, refutarPorJP, setRefutarPorJP, setProgramas } = useProgramas();
+  const { currentUser, changeUser } = useRole();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState('solicitudes');
+  const [isLoading, setIsLoading] = useState(true);
+  const [expanded, setExpanded] = useState({});
+  const [selectedCarteras, setSelectedCarteras] = useState([]);
 
+  // Buscar la propuesta real por id - intentando con ambos formatos de ID
+  const propuesta = propuestas.find(p => 
+    String(p.id_propuesta) === String(propuestaId) || 
+    String(p.id) === String(propuestaId)
+  ) || {
+    id: propuestaId,
+    nombre: `Propuesta_${propuestaId}`,
+    fecha_propuesta: new Date(),
+    estado: 'pre-conciliado',
+    carteras: [],
+    fecha_creacion: new Date(),
+    fecha_actualizacion: new Date()
+  };
+
+  // Efecto para actualizar el ID de usuario desde los parámetros de URL
+  // Usamos una ref para asegurarnos de que solo se ejecute una vez
+  const hasUpdatedUser = React.useRef(false);
+
+  // Llamada real al backend para obtener los programas de la propuesta
   useEffect(() => {
-    if (!propuestaId || !currentUser) return;
-    setIsLoading(true);
-    const url = `http://localhost:8000/solicitudes-pre-conciliacion/propuesta/${propuestaId}/usuario/${currentUser.id_usuario}`;
+    if (!propuestaId) {
+      return;
+    }
+    setIsLoading(true); // Comenzar a mostrar el estado de carga
+    const url = `http://127.0.0.1:8000/propuestas/${propuestaId}/programas`;
+    
     fetch(url)
-      .then(response => {
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-        return response.json();
+      .then(res => {
+        return res.json();
       })
       .then(data => {
-        setSolicitudesOportunidad(Array.isArray(data.solicitudesPropuestaOportunidad) ? data.solicitudesPropuestaOportunidad : []);
-        setSolicitudesPrograma(Array.isArray(data.solicitudesPropuestaPrograma) ? data.solicitudesPropuestaPrograma : []);
-        setSolicitudesGenerales(Array.isArray(data.solicitudesGenerales) ? data.solicitudesGenerales : []);
-        setError(null);
-        setIsLoading(false);
+        if (Array.isArray(data)) {
+          const programasServicio = data.map(p => ({
+            ...p,
+            id: `programa-${p.nombre}`,
+            cancelar: Boolean(p.cancelar)
+          }));
+          setProgramas(programasServicio);
+        } else {
+          console.warn('Los datos recibidos no son un array:', data);
+        }
+        setIsLoading(false); 
       })
-      .catch(() => {
-        setError('No se pudieron cargar las solicitudes. Por favor, intente nuevamente.');
+      .catch(err => {
+        console.error('Error al obtener programas de la propuesta:', err);
         setIsLoading(false);
       });
-  }, [currentUser, propuestaId]);
+  }, [propuestaId]);
 
+  // Filtrar para mostrar solo programas donde el id_jefe_finanzas coincide con el id_usuario del DAF actual
+  const programasFiltrados = useMemo(() => {
+    return programas;
+  }, [programas, propuesta.carteras]);
+  
+  // Separar programas en mes conciliado (más reciente) y 3 meses anteriores
+  const [programasMesConciliado, programasResto] = useMemo(() => {
+    if (!programasFiltrados || programasFiltrados.length === 0) return [[], []];
+    // Obtener el mes más reciente (YYYY-MM)
+    const meses = programasFiltrados
+      .map(p => p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null)
+      .filter(Boolean);
+    if (meses.length === 0) return [[], []];
+    const mesMasReciente = meses.sort().reverse()[0];
+    const mesConciliado = programasFiltrados.filter(p => {
+      const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
+      return mes === mesMasReciente;
+    });
+    const resto = programasFiltrados.filter(p => {
+      const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
+      return mes !== mesMasReciente;
+    });
+    return [mesConciliado, resto];
+  }, [programasFiltrados]);
+
+  // Efecto para cargar solicitudes específicas del usuario actual
+  useEffect(() => {
+    if (!currentUser || !propuestaId) {
+      return;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);    
+    const userId = urlParams.get('id_usuario') || currentUser?.id_usuario;
+    console.log("user id", userId)
+    // Si hay un ID de usuario en la URL y es diferente al actual, actualizamos el contexto
+    if (userId && userId !== currentUser.id_usuario.toString()) {
+      
+      // Crear una copia del usuario actual con el nuevo ID
+      const updatedUser = {
+        ...currentUser,
+        id_usuario: userId
+      };
+      
+      // Marcar que ya hemos actualizado el usuario para evitar bucles
+      hasUpdatedUser.current = true;
+      
+      // Actualizar el contexto con el usuario modificado
+      changeUser(updatedUser, currentUser.rol);
+    } else {
+      // Si no hay cambio que hacer, también marcamos como completado
+      hasUpdatedUser.current = true;
+    }
+    // Ya no necesitamos cargar solicitudes aquí, ya que el componente SolicitudesAprobacion lo hace internamente
+  }, [propuestaId]);
+  
+  // Handler para manejar selección de No Aperturar
+  const handleCancelarChange = (id) => {
+    const programa = programasFiltrados.find(p => String(p.id) === String(id));
+    
+    if (!programa) {
+      console.warn(`Programa con ID ${id} no encontrado para cambiar estado cancelar`);
+      return;
+    }
+    
+    const nuevoEstado = !programa.cancelar;
+    setProgramas(prev => {
+      const updated = prev.map(p => ({
+        ...p,
+        cancelar: String(p.id) === String(id) ? nuevoEstado : p.cancelar
+      }));
+      return updated;
+    });
+  };
+
+  const handleMontoPropuestoChange = (programaId, identificador, nuevoMonto) => {
+    setProgramas(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== programaId) return p;
+        return {
+          ...p,
+          oportunidades: (p.oportunidades ?? []).map(oportunidad => {
+            if (oportunidad.dni === identificador) {
+              return {
+                ...oportunidad,
+                monto_inicial: oportunidad.monto,
+                monto_propuesto: nuevoMonto,
+                monto_propuesto_daf: nuevoMonto,
+                monto_editado_en_sesion: true,
+                monto_editado_por_jp: false,
+                monto_editado_por_daf: true
+              };
+            }
+            return oportunidad;
+          })
+        };
+      });
+      return updated;
+    });
+  };
+  const mesConciliacion = useMemo(() => {
+    const fechaStr = propuesta?.fecha_propuesta || propuesta?.creado_en;
+    if (fechaStr) {
+      const fecha = new Date(fechaStr);
+      if (!isNaN(fecha)) {
+        const mesConciliadoDate = subMonths(fecha, 1);
+        const mesConciliadoTexto = formatDate(mesConciliadoDate, "LLLL yyyy", { locale: localeEs });
+        const mesesAnteriores = [2, 3, 4].map(n => {
+          const d = subMonths(fecha, n);
+          return formatDate(d, "LLLL yyyy", { locale: localeEs });
+        });
+        return {
+          mesConciliado: mesConciliadoTexto.charAt(0).toUpperCase() + mesConciliadoTexto.slice(1),
+          mesesAnteriores: mesesAnteriores.map(m => m.charAt(0).toUpperCase() + m.slice(1))
+        };
+      }
+    }
+    return null;
+  }, [propuesta]);
+
+  const handleRevertirMonto = (programaId, dni) => {
+    setProgramas(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== programaId) return p;
+        return {
+          ...p,
+          oportunidades: (p.oportunidades ?? []).map(oportunidad => {
+            if (oportunidad.dni === dni) {
+              return {
+                ...oportunidad,
+                monto_propuesto: oportunidad.monto,
+                monto_propuesto_daf: oportunidad.monto,
+                monto_editado_en_sesion: false,
+                monto_editado_por_daf: false
+              };
+            }
+            return oportunidad;
+          })
+        };
+      });
+      return updated;
+    });
+  };
+
+  const toggleExpand = (programaId) => {
+    setExpanded(prev => ({ ...prev, [programaId]: !prev[programaId] }));
+  };
+  
+  // Función para manejar la confirmación de todos los cambios
+  const handleConfirmarTodosCambios = () => {
+    setShowConfirm(false);
+    setIsLoading(true);
+    
+    // Obtener el ID de usuario directamente de la URL o del contexto
+    const urlParams = new URLSearchParams(window.location.search);    
+    const userId = urlParams.get('id_usuario') || currentUser?.id_usuario;
+    
+    // Preparar datos para enviar
+    const datosAprobacion = {
+      id_propuesta: Number(propuestaId),
+      id_usuario: userId,
+      estado: 'conciliado'
+    };
+    
+    // Enviar la actualización de estado al backend
+    fetch(`http://127.0.0.1:8000/propuestas/${propuestaId}/estado`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(datosAprobacion),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      setIsLoading(false);
+      // Redirigir a la vista de propuestas
+      navigate('/main/propuestas', { replace: true });
+    })
+    .catch(error => {
+      console.error('Error al actualizar la propuesta:', error);
+      setIsLoading(false);
+      alert(`Error al actualizar la propuesta: ${error.message}`);
+    });
+  };
+
+  // --- Render ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center text-blue-900">Solicitudes Generales de Pre-Conciliación</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background-light via-background-subtle to-white">
+      <PropuestasHeader titulo="Etapa : Pre-Conciliada" onBack={() => navigate('/main/propuestas')} />
 
-        {isLoading && (
-          <div className="flex flex-col items-center py-16">
-            <svg className="animate-spin h-8 w-8 text-blue-400 mb-2" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
-            <span className="text-blue-700 font-medium">Cargando solicitudes...</span>
-          </div>
-        )}
+      <PropuestaResumen
+        propuesta={propuesta}
+        formatearFecha={formatearFecha}
+        handleConfirmarCambios={() => setShowConfirm(true)}
+      />
 
-        {error && (
-          <div className="text-red-500 text-center py-4 font-semibold">{error}</div>
-        )}
-
-        {!isLoading && !error && (
-          <section>
-            <h3 className="text-xl font-bold mb-4 text-blue-800 flex items-center gap-2">
-              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-              Solicitudes Generales
-            </h3>
-            {solicitudesGenerales.length === 0 ? (
-              <div className="text-gray-400 italic">No hay solicitudes generales.</div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-4">
-                {solicitudesGenerales.map(s => {
-                  const isAbierta = s.abierta === 1 || s.abierta === true;
-                  return (
-                    <Card key={s.id_solicitud}>
-                      <div className={`flex flex-col gap-1 ${isAbierta ? 'opacity-60 bg-gray-100' : 'bg-green-50 border-green-200'} p-2 rounded-lg transition-all`}> 
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-blue-700">Tipo: {s.tipo_solicitud}</span>
-                          <span className="ml-auto"><StatusBadge status={s.valor_solicitud} /></span>
-                        </div>
-                        <div className="text-xs text-gray-600 mb-1">{s.comentario}</div>
-                        <div className="text-xs text-gray-400">{new Date(s.creado_en).toLocaleString()}</div>
-                        {isAbierta ? (
-                          <div className="mt-2 text-xs font-semibold text-gray-500 flex items-center gap-1">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
-                            <span>Bloqueada (abierta)</span>
-                          </div>
-                        ) : (
-                          <div className="mt-2 text-xs font-semibold text-green-700 flex items-center gap-1">
-                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                            <span>Cerrada</span>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
-      </div>
+      <Tabs 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        mesConciliacion={mesConciliacion} 
+      />
+      
+      {/* Mostrar el modal de carga mientras isLoading es true */}
+      {isLoading ? (
+        <LoadingModal />
+      ) : (
+        <>
+          {activeTab === 'solicitudes' && (
+              <SolicitudesAprobacion 
+                propuesta={propuestaId}
+                usuarioId={currentUser?.id_usuario}
+              />
+          )}
+          {activeTab === 'mesConciliado' && (
+            <ProgramasGrillaDAF 
+                  programas={programasMesConciliado}
+                  expanded={expanded}
+                  onToggleExpand={toggleExpand}
+                  onToggleCancelar={handleCancelarChange}
+                  onChangeMonto={handleMontoPropuestoChange}
+                  onRevertMonto={handleRevertirMonto}
+                  selectedCarteras={selectedCarteras}
+                  setSelectedCarteras={setSelectedCarteras}
+                  estado={activeTab}
+            />
+          )}
+          
+          {activeTab === 'mesesPasados' && (
+            <ProgramasGrillaDAFRevision
+              programas={programasResto}
+              expanded={expanded}
+              onToggleExpand={toggleExpand}
+              onToggleCancelar={handleCancelarChange}
+              onChangeMonto={handleMontoPropuestoChange}
+              onRevertMonto={handleRevertirMonto}
+              selectedCarteras={selectedCarteras}
+              setSelectedCarteras={setSelectedCarteras}
+              estado={activeTab}/>
+          )}
+        </>
+      )}
+      
+      {/* Se eliminan los modales para solicitudes ya que ahora se manejan desde el componente SolicitudesAprobacion */}
+      
+      {/* Modal de confirmación para finalizar proceso completo */}
+      <ModalConfirmacion
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmarTodosCambios}
+        title="Confirmar cambios"
+        message="¿Estás seguro de que deseas confirmar todos los cambios y marcar la propuesta como conciliada? Esta acción no se puede deshacer."
+        confirmText="Confirmar cambios"
+        cancelText="Cancelar"
+      />
     </div>
   );
-}
+};
 
-export default SubdirectorPreConciliado;
+export default DAFPreConciliado;

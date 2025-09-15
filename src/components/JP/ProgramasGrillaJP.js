@@ -321,66 +321,89 @@ const ProgramasGrillaJP = ({
                                     <td colSpan={8} className="text-center text-gray-500 py-2">Sin matriculados</td>
                                   </tr>
                                 ) : (
-                                  matriculados.map((m, mIdx) => {
-                                    const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
-                                    let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
-                                    const isEdited = m.agregadoEnSesion || (edited && Number(m.monto_propuesto_daf) !== Number(original));
-                                    return (
-                                      <tr
-                                        key={mIdx}
-                                        className={m.EnSolicitud ? 'bg-yellow-200 text-gray-900' : (isEdited ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 transition-colors' : 'transition-colors')}
-                                      >
-                                        <td className="px-2 py-1 font-mono">{m.dni}</td>
-                                        <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
-                                        <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
-                                        <td className="px-2 py-1"><span>{m.monto}</span></td>
-                                        <td className="px-2 py-1">
-                                          {m.EnSolicitud ? (
-                                            <span className="text-gray-600">{m.monto_propuesto || m.monto}</span>
-                                          ) : (
-                                            <input
-                                              type="number"
-                                              value={m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null ? m.monto_propuesto_daf : (m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : '')}
-                                              onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
-                                              className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
-                                              placeholder="0"
-                                              disabled={m.EnSolicitud}
-                                            />
-                                          )}
-                                        </td>
-                                        <td className="px-2 py-1">{m.moneda}</td>
-                                        <td className="px-2 py-1">{m.fecha_matricula}</td>
-                                        <td className="px-2 py-1 flex gap-1 flex-wrap">
-                                          {m.EnSolicitud && (
-                                            <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
-                                              En solicitud pendiente
-                                            </span>
-                                          )}
-                                          {m.agregadoEnSesion && !m.EnSolicitud && (
-                                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
-                                              Agregado en sesión
-                                            </span>
-                                          )}
-                                          {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRevertMonto(programa.id, m.dni);
-                                              }}
-                                              className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
-                                            >
-                                              Revertir
-                                            </button>
-                                          )}
-                                          {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && (
-                                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
-                                              Atípico
-                                            </span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
+                                  <>
+                                    {matriculados.map((m, mIdx) => {
+                                      const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
+                                      let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
+                                      const isEdited = m.agregadoEnSesion || (edited && Number(m.monto_propuesto_daf) !== Number(original));
+                                      return (
+                                        <tr
+                                          key={mIdx}
+                                          className={m.EnSolicitud ? 'bg-yellow-200 text-gray-900' : (isEdited ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 transition-colors' : 'transition-colors')}
+                                        >
+                                          <td className="px-2 py-1 font-mono">{m.dni}</td>
+                                          <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
+                                          <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
+                                          <td className="px-2 py-1"><span>{m.monto}</span></td>
+                                          <td className="px-2 py-1">
+                                            {m.EnSolicitud ? (
+                                              <span className="text-gray-600">{m.monto_propuesto || m.monto}</span>
+                                            ) : (
+                                              <input
+                                                type="number"
+                                                value={m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null ? m.monto_propuesto_daf : (m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : '')}
+                                                onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
+                                                className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
+                                                placeholder="0"
+                                                disabled={m.EnSolicitud}
+                                              />
+                                            )}
+                                          </td>
+                                          <td className="px-2 py-1">{m.moneda}</td>
+                                          <td className="px-2 py-1">{m.fecha_matricula}</td>
+                                          <td className="px-2 py-1 flex gap-1 flex-wrap">
+                                            {m.EnSolicitud && (
+                                              <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
+                                                En solicitud pendiente
+                                              </span>
+                                            )}
+                                            {m.agregadoEnSesion && !m.EnSolicitud && (
+                                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                                                Agregado en sesión
+                                              </span>
+                                            )}
+                                            {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleRevertMonto(programa.id, m.dni);
+                                                }}
+                                                className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
+                                              >
+                                                Revertir
+                                              </button>
+                                            )}
+                                            {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && (
+                                              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                                                Atípico
+                                              </span>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                    {/* Botón para agregar alumno */}
+                                    <tr>
+                                      <td colSpan={8} className="text-center py-2">
+                                        <button
+                                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow"
+                                          onClick={() => {
+                                            const oportunidades = programa.oportunidades || [];
+                                            const noMatriculados = oportunidades
+                                              .filter(m => m.etapa_venta_propuesto !== '3 - Matrícula' && m.etapa_venta_propuesto !== '4 - Cerrada/Ganada')
+                                              .map(m => [m.dni, m.party_number]);
+                                            const tuplas = noMatriculados.map(([dni, party]) => `(${dni}, ${party})`).join(', ');
+                                            alert(
+                                              `Agregar alumno al programa CRM: ${programa.codigo}` +
+                                              `\n(DNI, party_number) NO matriculados: [${tuplas}]`
+                                            );
+                                          }}
+                                        >
+                                          Agregar Alumno
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  </>
                                 )}
                               </tbody>
                             </table>

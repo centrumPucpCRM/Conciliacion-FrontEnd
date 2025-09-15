@@ -386,9 +386,9 @@ const DAFGenerada = () => {
     });
     // Agrupar programas por subdireccion y enviar una sola solicitud por subdireccion
     const subdireccionReceptores = {
-      'Grado': 46,
-      'Educacion Ejecutiva': 47,
-      'CentrumX': 48
+      'Grado': 4,
+      'Educacion Ejecutiva': 5,
+      'CentrumX': 6
     };
     // Crear un Set para trackear combinaciones únicas de subdirección-JP
     const combinacionesUnicas = new Set();

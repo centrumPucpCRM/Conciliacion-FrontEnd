@@ -297,6 +297,7 @@ const JPPreConciliado = () => {
   // Función para enviar solicitudes a la API
   const enviarSolicitudAlBackend = async (endpoint, data) => {
     try {
+      console.log('Enviando solicitud a http://localhost:8000', endpoint, 'con datos:', data);
       const response = await fetch(`http://localhost:8000${endpoint}`, {
         method: 'POST',
         headers: {
@@ -393,9 +394,6 @@ const JPPreConciliado = () => {
     window.location.reload();
     //Ahora a todas las solicitudes del usuario
   };
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-100">

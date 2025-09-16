@@ -108,6 +108,9 @@ const SolicitudesAprobacion = ({ propuesta }) => {
       } else if(solicitud.solicitud.tipo_solicitud=="EDICION_ALUMNO") {
         // Para oportunidades, mostrar modal de monto
         setShowMontoModal(true);
+      }else if(solicitud.solicitud.tipo_solicitud=="AGREGAR_ALUMNO"){
+        setShowComentarioModal(true);
+
       }
     } else {
       setShowConfirmModal(true);
@@ -225,7 +228,7 @@ const SolicitudesAprobacion = ({ propuesta }) => {
             valor_solicitud: 'RECHAZADO',
             id_usuario_generador: id_usuario_receptor,  // El receptor se convierte en generador
             id_usuario_receptor: id_usuario_generador,  // El generador se convierte en receptor
-            comentario: `JP: ${comentarioRefutacion}\nSolicitud anterior: ${s.comentario}`
+            comentario: `${currentUser.nombres}: ${comentarioRefutacion}\nSolicitud anterior: ${s.comentario}`
           };
           
           await patchSolicitud(id_solicitud, body);
@@ -282,14 +285,17 @@ const SolicitudesAprobacion = ({ propuesta }) => {
         ) : (
           <>
             <h3 className="text-lg font-semibold mb-2 mt-4">Solicitudes de Oportunidad</h3>
-            {solicitudesOportunidad.length === 0 ? (
+            {solicitudesOportunidad.filter(solicitud => {
+              const s = solicitud.solicitud ? solicitud.solicitud : solicitud;
+              return s.tipo_solicitud === "EDICION_ALUMNO" || s.tipo_solicitud === "AGREGAR_ALUMNO";
+            }).length === 0 ? (
               <div className="text-center py-4 text-gray-500">No hay solicitudes de oportunidad.</div>
             ) : (
               <div className="overflow-x-auto mb-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th> */}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programa</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre Alumno</th>
@@ -300,35 +306,34 @@ const SolicitudesAprobacion = ({ propuesta }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {solicitudesOportunidad.map(solicitud => {
+                    {solicitudesOportunidad.filter(solicitud => {
+                      const s = solicitud.solicitud ? solicitud.solicitud : solicitud;
+                      return s.tipo_solicitud === "EDICION_ALUMNO" || s.tipo_solicitud === "AGREGAR_ALUMNO";
+                    }).map(solicitud => {
                       const s = solicitud.solicitud ? solicitud.solicitud : solicitud;
                       const estadoVisual = getEstadoVisual(solicitud, s);
                       const isPendiente = estadoVisual === 'PENDIENTE' || estadoVisual === 'PENDIENTE A REVISION';
-                      if (s.tipo_solicitud === "EDICION_ALUMNO") {
-                        return (
-                          <tr key={solicitud.id} className="hover:bg-gray-50">
-                            {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s.id_solicitud}</td> */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoClass(estadoVisual)}`}>{estadoVisual}</span>
-                            </td>
-                            <td className="px-6 py-4 break-words text-sm text-gray-500" style={{maxWidth: '300px', whiteSpace: 'normal'}}>{solicitud.nombre_programa}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{solicitud.nombre_alumno}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">{solicitud.dni_alumno}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">{solicitud.monto !== undefined && solicitud.monto !== null ? solicitud.monto : '-'}</td>
-                            <td className="px-6 py-4 break-words text-sm text-gray-500" style={{maxWidth: '300px', whiteSpace: 'normal'}}>{s.comentario}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
-                              {(estadoVisual === 'PENDIENTE' || estadoVisual === 'RECHAZADO') && (
-                                <>
-                                  <button className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold py-1 px-3 rounded shadow text-xs" onClick={() => handleAbrirModal(solicitud, 'ACEPTAR')}>Aceptar</button>
-                                  <button className="bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-1 px-3 rounded shadow text-xs" onClick={() => handleAbrirModal(solicitud, 'REFUTAR')}>Refutar</button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      }
-                      // Otros tipos de solicitud pueden ir aquí si se requiere
-                      return null;
+                      return (
+                        <tr key={solicitud.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-xs font-semibold text-blue-700">{s.tipo_solicitud}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoClass(estadoVisual)}`}>{estadoVisual}</span>
+                          </td>
+                          <td className="px-6 py-4 break-words text-sm text-gray-500" style={{maxWidth: '300px', whiteSpace: 'normal'}}>{solicitud.nombre_programa}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{solicitud.nombre_alumno}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">{solicitud.dni_alumno}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">{solicitud.monto !== undefined && solicitud.monto !== null ? solicitud.monto : '-'}</td>
+                          <td className="px-6 py-4 break-words text-sm text-gray-500" style={{maxWidth: '300px', whiteSpace: 'normal'}}>{s.comentario}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
+                            {(estadoVisual === 'PENDIENTE' || estadoVisual === 'RECHAZADO') && (
+                              <>
+                                <button className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold py-1 px-3 rounded shadow text-xs" onClick={() => handleAbrirModal(solicitud, 'ACEPTAR')}>Aceptar</button>
+                                <button className="bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-1 px-3 rounded shadow text-xs" onClick={() => handleAbrirModal(solicitud, 'REFUTAR')}>Refutar</button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      );
                     })}
                   </tbody>
                 </table>

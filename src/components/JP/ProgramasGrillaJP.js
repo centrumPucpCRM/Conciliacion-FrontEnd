@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import AlumnosModal from '../common/AlumnosModal';
 
 const ProgramasGrillaJP = ({
   programas,
@@ -9,6 +10,8 @@ const ProgramasGrillaJP = ({
   onRevertMonto,
   selectedCarteras,
   setSelectedCarteras,
+  onUpdateProgramas,
+  gridId,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = React.useRef(null);
@@ -27,6 +30,11 @@ const ProgramasGrillaJP = ({
   }, []);
   // Estado local para programas y alumnos con monto_real calculado
   const [localProgramas, setLocalProgramas] = useState([]);
+  const [showAlumnosModal, setShowAlumnosModal] = useState(false);
+  const [alumnosModalData, setAlumnosModalData] = useState([]);
+  const [alumnosModalSearch, setAlumnosModalSearch] = useState('');
+  // Estado para alumnos agregados por programa
+  const [alumnosAgregadosPorPrograma, setAlumnosAgregadosPorPrograma] = useState({}); // { [programaId]: [dni, ...] }
 
   // Inicializar localProgramas con monto_real calculado al cargar programas (solo si está vacío)
   useEffect(() => {
@@ -55,12 +63,11 @@ const ProgramasGrillaJP = ({
   // Handler para editar monto propuesto de un alumno
   const handleChangeMonto = (programaId, dni, value) => {
     // Actualizar estado local para UI inmediata
-    setLocalProgramas((prev) =>
-      prev.map((prog) => {
+    setLocalProgramas((prev) => {
+      const updated = prev.map((prog) => {
         if (prog.id !== programaId) return prog;
         const oportunidades = prog.oportunidades.map((o) => {
           if (o.dni !== dni) return o;
-          // Solo se edita monto_propuesto_daf
           if (value === '' || value === null) {
             const { monto_propuesto_daf, ...rest } = o;
             return { ...rest, monto_editado_en_sesion: false };
@@ -80,10 +87,10 @@ const ProgramasGrillaJP = ({
           0
         );
         return { ...prog, oportunidades, monto_real };
-      })
-    );
-
-    // Propagamos el cambio al componente padre para actualizar el estado global
+      });
+  if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+      return updated;
+    });
     if (onChangeMonto) {
       onChangeMonto(programaId, dni, value === '' || value === null ? null : Number(value));
     }
@@ -91,12 +98,11 @@ const ProgramasGrillaJP = ({
 
   // Handler para revertir monto propuesto
   const handleRevertMonto = (programaId, dni) => {
-    setLocalProgramas((prev) =>
-      prev.map((prog) => {
+    setLocalProgramas((prev) => {
+      const updated = prev.map((prog) => {
         if (prog.id !== programaId) return prog;
         const oportunidades = prog.oportunidades.map((o) => {
           if (o.dni !== dni) return o;
-          // Eliminar monto_propuesto_daf para volver a mostrar monto_propuesto
           const { monto_propuesto_daf, ...rest } = o;
           return { ...rest, monto_editado_en_sesion: false };
         });
@@ -113,10 +119,10 @@ const ProgramasGrillaJP = ({
           0
         );
         return { ...prog, oportunidades, monto_real };
-      })
-    );
-
-    // Propagamos el revertido al componente padre para actualizar el estado global
+      });
+  if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+      return updated;
+    });
     if (onRevertMonto) {
       onRevertMonto(programaId, dni);
     }
@@ -235,7 +241,7 @@ const ProgramasGrillaJP = ({
 
             <tbody className="bg-white divide-y divide-gray-400  align-top">
               {programasFiltrados.map((programa, idx) => {
-                const matriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada');
+                const matriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '3.5 - Tentativa Matricula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada');
 
                 const enRiesgo = matriculados.length < (programa.punto_minimo_apertura ?? 0);
                 const tieneAtipicoMatriculado = matriculados.some(o => o.posible_atipico);
@@ -323,13 +329,29 @@ const ProgramasGrillaJP = ({
                                 ) : (
                                   <>
                                     {matriculados.map((m, mIdx) => {
+                                      // Sincronización lógica de agregados y botón Eliminar
+                                      const isAgregado = (alumnosAgregadosPorPrograma[programa.id] || []).includes(m.dni);
                                       const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
                                       let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
-                                      const isEdited = m.agregadoEnSesion || (edited && Number(m.monto_propuesto_daf) !== Number(original));
                                       return (
                                         <tr
                                           key={mIdx}
-                                          className={m.EnSolicitud ? 'bg-yellow-200 text-gray-900' : (isEdited ? 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 transition-colors' : 'transition-colors')}
+                                          className={
+                                            isAgregado
+                                              ? 'bg-yellow-300 text-gray-900'
+                                              : m.EnSolicitud
+                                                ? 'bg-yellow-200 text-gray-900'
+                                                : ((() => {
+                                                    const base = 'transition-colors';
+                                                    if (
+                                                      m.agregadoEnSesion ||
+                                                      (edited && Number(m.monto_propuesto_daf) !== Number(original))
+                                                    ) {
+                                                      return 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 ' + base;
+                                                    }
+                                                    return base;
+                                                  })())
+                                          }
                                         >
                                           <td className="px-2 py-1 font-mono">{m.dni}</td>
                                           <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
@@ -352,17 +374,28 @@ const ProgramasGrillaJP = ({
                                           <td className="px-2 py-1">{m.moneda}</td>
                                           <td className="px-2 py-1">{m.fecha_matricula}</td>
                                           <td className="px-2 py-1 flex gap-1 flex-wrap">
-                                            {m.EnSolicitud && (
+                                            {isAgregado && (
+                                              <button
+                                                className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
+                                                onClick={() => {
+                                                  setAlumnosAgregadosPorPrograma(prev => {
+                                                    const arr = prev[programa.id] || [];
+                                                    return { ...prev, [programa.id]: arr.filter(dni => dni !== m.dni) };
+                                                  });
+                                                }}
+                                              >Eliminar</button>
+                                            )}
+                                            {m.EnSolicitud && !isAgregado && (
                                               <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
                                                 En solicitud pendiente
                                               </span>
                                             )}
-                                            {m.agregadoEnSesion && !m.EnSolicitud && (
+                                            {m.agregadoEnSesion && !m.EnSolicitud && !isAgregado && (
                                               <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
                                                 Agregado en sesión
                                               </span>
                                             )}
-                                            {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && (
+                                            {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && !isAgregado && (
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -373,7 +406,7 @@ const ProgramasGrillaJP = ({
                                                 Revertir
                                               </button>
                                             )}
-                                            {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && (
+                                            {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && !isAgregado && (
                                               <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
                                                 Atípico
                                               </span>
@@ -382,27 +415,80 @@ const ProgramasGrillaJP = ({
                                         </tr>
                                       );
                                     })}
-                                    {/* Botón para agregar alumno */}
+                                    {/* Botón para mostrar el modal de alumnos (matriculados y no matriculados) */}
                                     <tr>
                                       <td colSpan={8} className="text-center py-2">
                                         <button
                                           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow"
                                           onClick={() => {
                                             const oportunidades = programa.oportunidades || [];
-                                            const noMatriculados = oportunidades
-                                              .filter(m => m.etapa_venta_propuesto !== '3 - Matrícula' && m.etapa_venta_propuesto !== '4 - Cerrada/Ganada')
-                                              .map(m => [m.dni, m.party_number]);
-                                            const tuplas = noMatriculados.map(([dni, party]) => `(${dni}, ${party})`).join(', ');
-                                            alert(
-                                              `Agregar alumno al programa CRM: ${programa.codigo}` +
-                                              `\n(DNI, party_number) NO matriculados: [${tuplas}]`
-                                            );
+                                            const matriculados = oportunidades.filter(m => m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada');
+                                            const noMatriculados = oportunidades.filter(m => m.etapa_venta_propuesto !== '3 - Matrícula' && m.etapa_venta_propuesto !== '3.5 - Tentativa Matricula' && m.etapa_venta_propuesto !== '4 - Cerrada/Ganada');
+                                            const todos = [...matriculados, ...noMatriculados];
+                                            setAlumnosModalData(todos);
+                                            setShowAlumnosModal(true);
+                                            setAlumnosModalSearch('');
                                           }}
                                         >
                                           Agregar Alumno
                                         </button>
                                       </td>
                                     </tr>
+      {/* Modal de alumnos no matriculados */}
+      <AlumnosModal
+        open={showAlumnosModal}
+        alumnos={alumnosModalData}
+        onClose={() => setShowAlumnosModal(false)}
+        search={alumnosModalSearch}
+        onAgregarAlumno={(alumno) => {
+          // 1. Marcar como agregado y tipo agregar_alumno
+          setAlumnosAgregadosPorPrograma(prev => {
+            const arr = prev[programa.id] || [];
+            if (!arr.some(a => a.dni === alumno.dni)) {
+              return { ...prev, [programa.id]: [...arr, { ...alumno, tipo: 'agregar_alumno', agregadoEnSesion: true }] };
+            }
+            return prev;
+          });
+          // 2. Agregar o actualizar en la grilla principal (localProgramas)
+          setLocalProgramas(prev => {
+            const updated = prev.map(p => {
+              if (p.id !== programa.id) return p;
+              // Si ya existe, actualiza etapa y marca como agregado
+              if (p.oportunidades.some(o => o.dni === alumno.dni)) {
+                return {
+                  ...p,
+                  oportunidades: p.oportunidades.map(o =>
+                    o.dni === alumno.dni
+                      ? {
+                          ...o,
+                          etapa_venta_propuesto: '3.5 - Tentativa Matricula',
+                          tipo: 'agregar_alumno',
+                          agregadoEnSesion: true
+                        }
+                      : o
+                  )
+                };
+              }
+              // Si no existe, lo agrega
+              return {
+                ...p,
+                oportunidades: [
+                  ...p.oportunidades,
+                  {
+                    ...alumno,
+                    tipo: 'agregar_alumno',
+                    agregadoEnSesion: true,
+                    etapa_venta_propuesto: '3.5 - Tentativa Matricula',
+                  }
+                ]
+              };
+            });
+            if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+            return updated;
+          });
+          setShowAlumnosModal(false);
+        }}
+      />
                                   </>
                                 )}
                               </tbody>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import AlumnosModal from '../common/AlumnosModal';
 
 const ProgramasGrillaJPRevision = ({
   programas,
@@ -9,10 +10,18 @@ const ProgramasGrillaJPRevision = ({
   onRevertMonto,
   selectedCarteras,
   setSelectedCarteras,
+  onUpdateProgramas,
+  gridId,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   // Estado local para programas y alumnos con monto_real calculado
   const [localProgramas, setLocalProgramas] = useState([]);
+  const [showAlumnosModal, setShowAlumnosModal] = useState(false);
+  const [alumnosModalData, setAlumnosModalData] = useState([]);
+  const [alumnosModalSearch, setAlumnosModalSearch] = useState('');
+  // Estado para alumnos agregados por programa
+  const [alumnosAgregadosPorPrograma, setAlumnosAgregadosPorPrograma] = useState({}); // { [programaId]: [dni, ...] }
+
 
   // Inicializar localProgramas con monto_real calculado al cargar programas
   useEffect(() => {
@@ -41,13 +50,11 @@ const ProgramasGrillaJPRevision = ({
 
   // Handler para editar monto propuesto de un alumno
   const handleChangeMonto = (programaId, dni, value) => {
-    // Actualizar estado local para UI inmediata
-    setLocalProgramas((prev) =>
-      prev.map((prog) => {
+    setLocalProgramas((prev) => {
+      const updated = prev.map((prog) => {
         if (prog.id !== programaId) return prog;
         const oportunidades = prog.oportunidades.map((o) => {
           if (o.dni !== dni) return o;
-          // Solo se edita monto_propuesto_daf
           if (value === '' || value === null) {
             const { monto_propuesto_daf, ...rest } = o;
             return { ...rest, monto_editado_en_sesion: false };
@@ -67,10 +74,10 @@ const ProgramasGrillaJPRevision = ({
           0
         );
         return { ...prog, oportunidades, monto_real };
-      })
-    );
-
-    // Propagamos el cambio al componente padre para actualizar el estado global
+      });
+  if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+      return updated;
+    });
     if (onChangeMonto) {
       onChangeMonto(programaId, dni, value === '' || value === null ? null : Number(value));
     }
@@ -78,12 +85,11 @@ const ProgramasGrillaJPRevision = ({
 
   // Handler para revertir monto propuesto
   const handleRevertMonto = (programaId, dni) => {
-    setLocalProgramas((prev) =>
-      prev.map((prog) => {
+    setLocalProgramas((prev) => {
+      const updated = prev.map((prog) => {
         if (prog.id !== programaId) return prog;
         const oportunidades = prog.oportunidades.map((o) => {
           if (o.dni !== dni) return o;
-          // Eliminar monto_propuesto_daf para volver a mostrar monto_propuesto
           const { monto_propuesto_daf, ...rest } = o;
           return { ...rest, monto_editado_en_sesion: false };
         });
@@ -100,13 +106,13 @@ const ProgramasGrillaJPRevision = ({
           0
         );
         return { ...prog, oportunidades, monto_real };
-      })
-    );
-
-    // Propagamos el revertido al componente padre para actualizar el estado global
-    if (onRevertMonto) {
-      onRevertMonto(programaId, dni);
-    }
+      });
+  if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+      return updated;
+    });
+      if (onRevertMonto) {
+        onRevertMonto(programaId, dni);
+      }
   };
 
   // Estado para el filtro de meses
@@ -261,7 +267,7 @@ const ProgramasGrillaJPRevision = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-400 align-top">
               {programasFiltrados.map((programa) => {
-                const matriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada');
+                const matriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '3.5 - Tentativa Matricula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada');
                 const enRiesgo = matriculados.length < (programa.minimo_de_apertura ?? 0);
                 const tieneAtipicoMatriculado = matriculados.some(o => o.posible_atipico);
 
@@ -345,79 +351,167 @@ const ProgramasGrillaJPRevision = ({
                                     <td colSpan={8} className="text-center text-gray-500 py-2">Sin matriculados</td>
                                   </tr>
                                 ) : (
-                                  matriculados.map((m, mIdx) => (
-                                    <tr
-                                      key={mIdx}
-                                      className={
-                                        m.EnSolicitud
-                                          ? 'bg-yellow-200 text-gray-900'
-                                          : ((() => {
-                                              const base = 'transition-colors';
-                                              const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
-                                              let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
-                                              if (
-                                                m.agregadoEnSesion ||
-                                                (edited && Number(m.monto_propuesto_daf) !== Number(original))
-                                              ) {
-                                                return 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 ' + base;
-                                              }
-                                              return base;
-                                            })())
-                                      }
-                                    >
-                                      <td className="px-2 py-1 font-mono">{m.dni}</td>
-                                      <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
-                                      <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
-                                      <td className="px-2 py-1"><span>{m.monto}</span></td>
-                                      <td className="px-2 py-1">
-                                        {m.EnSolicitud ? (
-                                          <span className="text-gray-600">{m.monto_propuesto || m.monto}</span>
-                                        ) : (
-                                          <input
-                                            type="number"
-                                            value={m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null ? m.monto_propuesto_daf : (m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : '')}
-                                            onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
-                                            className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
-                                            placeholder="0"
-                                            disabled={m.EnSolicitud}
-                                          />
-                                        )}
-                                      </td>
-                                      <td className="px-2 py-1">{m.moneda}</td>
-                                      <td className="px-2 py-1">{m.fecha_matricula}</td>
-                                      <td className="px-2 py-1 flex gap-1 flex-wrap">
-                                        {m.EnSolicitud && (
-                                          <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
-                                            En solicitud pendiente
-                                          </span>
-                                        )}
-                                        {m.agregadoEnSesion && !m.EnSolicitud && (
-                                          <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
-                                            Agregado en sesión
-                                          </span>
-                                        )}
-                                        {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleRevertMonto(programa.id, m.dni);
-                                            }}
-                                            className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
-                                          >
-                                            Revertir
-                                          </button>
-                                        )}
-                                        {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && (
-                                          <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
-                                            Atípico
-                                          </span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))
+                                  matriculados.map((m, mIdx) => {
+                                    const isAgregado = (alumnosAgregadosPorPrograma[programa.id] || []).includes(m.dni);
+                                    return (
+                                      <tr
+                                        key={mIdx}
+                                        className={
+                                          isAgregado
+                                            ? 'bg-yellow-300 text-gray-900'
+                                            : m.EnSolicitud
+                                              ? 'bg-yellow-200 text-gray-900'
+                                              : ((() => {
+                                                  const base = 'transition-colors';
+                                                  const edited = m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null;
+                                                  let original = m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : m.monto;
+                                                  if (
+                                                    m.agregadoEnSesion ||
+                                                    (edited && Number(m.monto_propuesto_daf) !== Number(original))
+                                                  ) {
+                                                    return 'bg-yellow-300 hover:bg-yellow-400 text-gray-900 ' + base;
+                                                  }
+                                                  return base;
+                                                })())
+                                        }
+                                      >
+                                        <td className="px-2 py-1 font-mono">{m.dni}</td>
+                                        <td className="px-2 py-1 text-xs">{m.alumno || 'N/A'}</td>
+                                        <td className="px-2 py-1">{m.descuento ? `${(Number(m.descuento) * 100).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%` : '-'}</td>
+                                        <td className="px-2 py-1"><span>{m.monto}</span></td>
+                                        <td className="px-2 py-1">
+                                          {m.EnSolicitud ? (
+                                            <span className="text-gray-600">{m.monto_propuesto || m.monto}</span>
+                                          ) : (
+                                            <input
+                                              type="number"
+                                              value={m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null ? m.monto_propuesto_daf : (m.monto_propuesto !== undefined && m.monto_propuesto !== null ? m.monto_propuesto : '')}
+                                              onChange={(e) => handleChangeMonto(programa.id, m.dni, e.target.value)}
+                                              className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-accent-orange"
+                                              placeholder="0"
+                                              disabled={m.EnSolicitud}
+                                            />
+                                          )}
+                                        </td>
+                                        <td className="px-2 py-1">{m.moneda}</td>
+                                        <td className="px-2 py-1">{m.fecha_matricula}</td>
+                                        <td className="px-2 py-1 flex gap-1 flex-wrap">
+                                          {isAgregado && (
+                                            <button
+                                              className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
+                                              onClick={() => {
+                                                setAlumnosAgregadosPorPrograma(prev => {
+                                                  const arr = prev[programa.id] || [];
+                                                  return { ...prev, [programa.id]: arr.filter(dni => dni !== m.dni) };
+                                                });
+                                              }}
+                                            >Eliminar</button>
+                                          )}
+                                          {m.EnSolicitud && !isAgregado && (
+                                            <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-1 rounded">
+                                              En solicitud pendiente
+                                            </span>
+                                          )}
+                                          {m.agregadoEnSesion && !m.EnSolicitud && !isAgregado && (
+                                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                                              Agregado en sesión
+                                            </span>
+                                          )}
+                                          {!m.EnSolicitud && m.monto_propuesto_daf !== undefined && m.monto_propuesto_daf !== null && m.monto_propuesto_daf !== m.monto_propuesto && !isAgregado && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRevertMonto(programa.id, m.dni);
+                                              }}
+                                              className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
+                                            >
+                                              Revertir
+                                            </button>
+                                          )}
+                                          {m.posible_atipico && (m.etapa_venta_propuesto === '3 - Matrícula' || m.etapa_venta_propuesto === '4 - Cerrada/Ganada') && !isAgregado && (
+                                            <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                                              Atípico
+                                            </span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })
                                 )}
                               </tbody>
                             </table>
+                            {/* Botón para agregar alumnos */}
+                            <div className="mt-4 flex justify-center">
+                              <button
+                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow"
+                                onClick={() => {
+                                  // Matriculados
+                                  const matriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada');
+                                  // No matriculados
+                                  const noMatriculados = (programa.oportunidades || []).filter(p => p.etapa_venta_propuesto !== '3 - Matrícula' && p.etapa_venta_propuesto !== '4 - Cerrada/Ganada');
+                                  console.log('Matriculados:', matriculados);
+                                  console.log('No Matriculados:', noMatriculados);
+                                  // Mostrar ambos en el modal
+                                  const todos = [...matriculados, ...noMatriculados];
+                                  setAlumnosModalData(todos);
+                                  setShowAlumnosModal(true);
+                                }}
+                              >Agregar alumnos</button>
+                            </div>
+                            <AlumnosModal
+                              open={showAlumnosModal}
+                              alumnos={alumnosModalData}
+                              onClose={() => setShowAlumnosModal(false)}
+                              search={alumnosModalSearch}
+                              onAgregarAlumno={(alumno) => {
+                                // 1. Marcar como agregado y tipo agregar_alumno
+                                setAlumnosAgregadosPorPrograma(prev => {
+                                  const arr = prev[programa.id] || [];
+                                  if (!arr.some(a => a.dni === alumno.dni)) {
+                                    return { ...prev, [programa.id]: [...arr, { ...alumno, tipo: 'agregar_alumno', agregadoEnSesion: true }] };
+                                  }
+                                  return prev;
+                                });
+                                // 2. Agregar o actualizar en la grilla principal (localProgramas)
+                                setLocalProgramas(prev => {
+                                  const updated = prev.map(p => {
+                                    if (p.id !== programa.id) return p;
+                                    // Si ya existe, actualiza etapa y marca como agregado
+                                    if (p.oportunidades.some(o => o.dni === alumno.dni)) {
+                                      return {
+                                        ...p,
+                                        oportunidades: p.oportunidades.map(o =>
+                                          o.dni === alumno.dni
+                                            ? {
+                                                ...o,
+                                                etapa_venta_propuesto: '3.5 - Tentativa Matricula',
+                                                tipo: 'agregar_alumno',
+                                                agregadoEnSesion: true
+                                              }
+                                            : o
+                                        )
+                                      };
+                                    }
+                                    // Si no existe, lo agrega
+                                    return {
+                                      ...p,
+                                      oportunidades: [
+                                        ...p.oportunidades,
+                                        {
+                                          ...alumno,
+                                          tipo: 'agregar_alumno',
+                                          agregadoEnSesion: true,
+                                          etapa_venta_propuesto: '3.5 - Tentativa Matricula',
+                                        }
+                                      ]
+                                    };
+                                  });
+                                  if (onUpdateProgramas) onUpdateProgramas(gridId, updated);
+                                  return updated;
+                                });
+                                setShowAlumnosModal(false);
+                              }}
+                            />
                           </div>
                         </td>
                       </tr>

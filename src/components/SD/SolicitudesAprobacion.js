@@ -98,8 +98,6 @@ const SolicitudesAprobacion = ({ propuesta, usuarioId }) => {
                             <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-semibold text-xs">Pendiente a revisión por el JP</span>
                           ) : solicitud.valor_solicitud === 'ACEPTADO' ? (
                             <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold text-xs">Cerrada y ACEPTADA</span>
-                          ) : solicitud.valor_solicitud === 'RECHAZADO' ? (
-                            <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full font-semibold text-xs">Cerrada y RECHAZADA</span>
                           ) : (
                             <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full font-semibold text-xs">Cerrada</span>
                           )}
@@ -118,7 +116,6 @@ const SolicitudesAprobacion = ({ propuesta, usuarioId }) => {
                                 className="bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-1 px-3 rounded shadow text-xs"
                                 onClick={() => setModal({ open: true, solicitudId: solicitud.id_solicitud, accion: 'RECHAZAR' })}
                               >Rechazar</button>
-      {/* Modal de confirmación */}
       <ConfirmModal
         open={modal.open}
         mensaje={modal.accion === 'ACEPTAR' ? '¿Está seguro que desea aceptar esta solicitud?' : '¿Está seguro que desea rechazar esta solicitud?'}

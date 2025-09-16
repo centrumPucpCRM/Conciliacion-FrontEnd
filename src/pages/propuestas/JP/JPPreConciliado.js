@@ -132,27 +132,34 @@ const JPPreConciliado = () => {
   }, [propuestaId, solicitudesOportunidad]);
 
 
-  const programasFiltrados = programas
-  
   // Separar programas en mes conciliado (más reciente) y 3 meses anteriores
   const [programasMesConciliado, programasResto] = useMemo(() => {
-    if (!programasFiltrados || programasFiltrados.length === 0) return [[], []];
+    if (!programas || programas.length === 0) return [[], []];
     // Obtener el mes más reciente (YYYY-MM)
-    const meses = programasFiltrados
+    const meses = programas
       .map(p => p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null)
       .filter(Boolean);
     if (meses.length === 0) return [[], []];
     const mesMasReciente = meses.sort().reverse()[0];
-    const mesConciliado = programasFiltrados.filter(p => {
+    const mesConciliado = programas.filter(p => {
       const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
       return mes === mesMasReciente;
     });
-    const resto = programasFiltrados.filter(p => {
+    const resto = programas.filter(p => {
       const mes = p.fecha_de_inauguracion ? new Date(p.fecha_de_inauguracion).toISOString().slice(0,7) : null;
       return mes !== mesMasReciente;
     });
     return [mesConciliado, resto];
-  }, [programasFiltrados]);
+  }, [programas]);
+
+  // Estado separado para cada grilla/tab
+  const [programasMesConciliadoLocal, setProgramasMesConciliadoLocal] = useState([]);
+  const [programasRestoLocal, setProgramasRestoLocal] = useState([]);
+  // Sincronizar los estados locales con los globales al cambiar programas
+  useEffect(() => {
+    setProgramasMesConciliadoLocal(programasMesConciliado);
+    setProgramasRestoLocal(programasResto);
+  }, [programasMesConciliado, programasResto]);
 
   // Calcular el mes conciliado y los 3 meses anteriores en formato texto largo
   const mesConciliacion = useMemo(() => {
@@ -177,10 +184,10 @@ const JPPreConciliado = () => {
   
   // Alumnos cuyo monto propuesto fue editado por JP
   const alumnosEditados = useMemo(() => {
-    return (programasFiltrados || [])
+    return (programas || [])
       .flatMap(p => (p.oportunidades ?? []).map(o => ({ ...o, programaId: p.id, nombrePrograma: p.nombre })))
       .filter(o => o.monto_editado_en_sesion === true || o.monto_editado_por_jp === true);
-  }, [programasFiltrados]);
+  }, [programas]);
 
 
 
@@ -196,9 +203,9 @@ const JPPreConciliado = () => {
         const solicitudes = await resp.json();
         // Si todas están abiertas (abierta === true), setear true
         if (Array.isArray(solicitudes) && solicitudes.length > 0) {
-          const todasAbiertas = solicitudes.every(s => s.abierta === true);
-          console.log('Todas las solicitudes APROBACION_JP están abiertas:', todasAbiertas,solicitudes);
-          setTodasAprobacionJPAbiertas(todasAbiertas);
+            const algunaAbierta = solicitudes.some(s => s.abierta === true);
+            console.log('Alguna solicitud APROBACION_JP está abierta:', algunaAbierta, solicitudes);
+            setTodasAprobacionJPAbiertas(algunaAbierta);
         } else {
           setTodasAprobacionJPAbiertas(false);
         }
@@ -223,7 +230,7 @@ const JPPreConciliado = () => {
 
   // Handler para manejar selección de No Aperturar
   const handleCancelarChange = (id) => {
-    const programa = programasFiltrados.find(p => String(p.id) === String(id));
+  const programa = programas.find(p => String(p.id) === String(id));
     
     if (!programa) {
       console.warn(`Programa con ID ${id} no encontrado para cambiar estado cancelar`);
@@ -250,6 +257,7 @@ const JPPreConciliado = () => {
             if (oportunidad.dni === identificador) {
               return {
                 ...oportunidad,
+                agregadoEnSesion: oportunidad.agregadoEnSesion === true,
                 monto_inicial: oportunidad.monto,
                 monto_propuesto: nuevoMonto,
                 monto_propuesto_jp: nuevoMonto,
@@ -319,6 +327,10 @@ const JPPreConciliado = () => {
 
   const handleConfirmRevisado = async () => {
     setIsLoading(true);
+    // Imprimir en consola todos los alumnos agregados
+    const alumnosAgregados = (programas || [])
+      .flatMap(p => (p.oportunidades ?? []).filter(o => o.agregadoEnSesion === true));
+    console.log('Alumnos agregados en sesión:', alumnosAgregados);
     // 1. Actualizar monto_propuesto en backend para cada oportunidad editada
     await Promise.all(alumnosEditados.map(async (alumno) => {
       try {
@@ -404,6 +416,12 @@ const JPPreConciliado = () => {
         formatearFecha={formatearFecha}
         handleConfirmarCambios={handleConfirmRevisado}
         todasAprobacionJPAbiertas={todasAprobacionJPAbiertas}
+        alumnosAgregados={
+          [
+            ...(programasMesConciliadoLocal || []).flatMap(p => (p.oportunidades ?? []).filter(o => o.agregadoEnSesion === true)),
+            ...(programasRestoLocal || []).flatMap(p => (p.oportunidades ?? []).filter(o => o.agregadoEnSesion === true))
+          ]
+        }
       />
 
       <Tabs 
@@ -422,22 +440,8 @@ const JPPreConciliado = () => {
           )}
 
           {activeTab === 'mesConciliado' && (
-                <ProgramasGrillaJP 
-                  programas={programasMesConciliado}
-                  expanded={expanded}
-                  onToggleExpand={toggleExpand}
-                  onToggleCancelar={handleCancelarChange}
-                  onChangeMonto={handleMontoPropuestoChange}
-                  onRevertMonto={handleRevertirMonto}
-                  selectedCarteras={selectedCarteras}
-                  setSelectedCarteras={setSelectedCarteras}
-                  estado={activeTab}
-                />
-              )
-          }
-          {activeTab === 'mesesPasados' && (
-            <ProgramasGrillaJPRevision 
-              programas={programasResto}
+            <ProgramasGrillaJP 
+              programas={programasMesConciliadoLocal}
               expanded={expanded}
               onToggleExpand={toggleExpand}
               onToggleCancelar={handleCancelarChange}
@@ -446,6 +450,31 @@ const JPPreConciliado = () => {
               selectedCarteras={selectedCarteras}
               setSelectedCarteras={setSelectedCarteras}
               estado={activeTab}
+              gridId="mesConciliado"
+              onUpdateProgramas={(gridId, updated) => {
+                if (gridId === "mesConciliado") {
+                  setProgramasMesConciliadoLocal(updated);
+                }
+              }}
+            />
+          )}
+          {activeTab === 'mesesPasados' && (
+            <ProgramasGrillaJPRevision 
+              programas={programasRestoLocal}
+              expanded={expanded}
+              onToggleExpand={toggleExpand}
+              onToggleCancelar={handleCancelarChange}
+              onChangeMonto={handleMontoPropuestoChange}
+              onRevertMonto={handleRevertirMonto}
+              selectedCarteras={selectedCarteras}
+              setSelectedCarteras={setSelectedCarteras}
+              estado={activeTab}
+              gridId="mesesPasados"
+              onUpdateProgramas={(gridId, updated) => {
+                if (gridId === "mesesPasados") {
+                  setProgramasRestoLocal(updated);
+                }
+              }}
             />
           )}
         </>

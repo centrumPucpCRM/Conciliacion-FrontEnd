@@ -33,17 +33,17 @@ const SuccessPopup = ({ type, fechaTexto, onClose }) => {
           )}
         </div>
 
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">
           {isGenerada ? '¡Propuesta generada!' : '¡Propuesta programada!'}
         </h3>
 
-        <p className="text-gray-700 mb-1">
+        <p className="text-slate-700 mb-1">
           {isGenerada
             ? 'Tu propuesta fue generada correctamente.'
             : 'Tu propuesta fue programada correctamente.'}
         </p>
         {fechaTexto && (
-          <p className="text-gray-500 text-sm mb-6">Fecha y hora: {fechaTexto}</p>
+          <p className="text-slate-500 text-sm mb-6">Fecha y hora: {fechaTexto}</p>
         )}
 
         <button
@@ -195,11 +195,11 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-soft border border-gray-200 w-full max-w-2xl max-h-[85vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-8 border-b border-gray-200">
+      <div className="bg-white rounded-2xl shadow-soft border border-slate-200 w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-8 border-b border-slate-200">
           <h2 className="text-2xl font-bold text-gray-800">Nueva Propuesta</h2>
           <button
-            className="text-gray-400 hover:text-gray-600 text-3xl font-bold cursor-pointer transition-colors duration-200"
+            className="text-slate-400 hover:text-slate-600 text-3xl font-bold cursor-pointer transition-colors duration-200"
             onClick={onClose}
             aria-label="Cerrar modal"
           >
@@ -210,7 +210,7 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
         <form onSubmit={handleSubmit} className="p-8">
           {/* CARTERAS */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-slate-700 mb-3">
               Carteras *
             </label>
 
@@ -219,15 +219,15 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
                 ref={buttonRef}
                 type="button"
                 onClick={toggleDropdown}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 bg-white text-left flex items-center justify-between"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-colors duration-200 bg-white text-left flex items-center justify-between"
               >
-                <span className={formData.carteras.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                <span className={formData.carteras.length > 0 ? 'text-slate-900' : 'text-slate-500'}>
                   {formData.carteras.length > 0
                     ? `${formData.carteras.length} cartera${formData.carteras.length > 1 ? 's' : ''} seleccionada${formData.carteras.length > 1 ? 's' : ''}`
                     : 'Seleccione las carteras'}
                 </span>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -238,13 +238,13 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
 
               {isDropdownOpen && (
                 <div
-                  className={`absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-52 overflow-y-auto ${
+                  className={`absolute z-10 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto ${
                     dropdownDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
                   }`}
                 >
                   {/* Seleccionar todos */}
                   <div
-                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors duration-200 flex items-center gap-3"
+                    className="px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors duration-200 flex items-center gap-3"
                     onClick={toggleAllCarteras}
                   >
                     <input
@@ -252,26 +252,26 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
                       type="checkbox"
                       readOnly
                       checked={allSelected}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-sky-500 focus:ring-sky-200 border-slate-200 rounded"
                     />
-                    <span className="text-sm text-gray-700">Seleccionar todos</span>
+                    <span className="text-sm text-slate-700">Seleccionar todos</span>
                   </div>
-                  <div className="border-t border-gray-200" />
+                  <div className="border-t border-slate-200" />
 
                   {/* Opciones individuales */}
                   {loadingCarteras ? (
-                    <div className="text-gray-500 text-sm px-4 py-2">Cargando carteras...</div>
+                    <div className="text-slate-500 text-sm px-4 py-2">Cargando carteras...</div>
                   ) : (
                     carterasDisponibles.map((cartera) => (
-                      <div key={cartera} className="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+                      <div key={cartera} className="px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors duration-200">
                         <label className="flex items-center cursor-pointer w-full">
                           <input
                             type="checkbox"
                             checked={formData.carteras.includes(cartera)}
                             onChange={() => handleCarteraChange(cartera)}
-                            className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            className="mr-3 h-4 w-4 text-sky-500 focus:ring-sky-200 border-slate-200 rounded"
                           />
-                          <span className="text-sm text-gray-700">{cartera}</span>
+                          <span className="text-sm text-slate-700">{cartera}</span>
                         </label>
                       </div>
                     ))
@@ -307,14 +307,14 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div>
-              <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-3">
+              <label htmlFor="fecha" className="block text-sm font-medium text-slate-700 mb-3">
                 Fecha de Propuesta *
               </label>
               <input
                 type="date"
                 id="fecha"
                 name="fecha"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-colors duration-200"
                 value={formData.fecha}
                 onChange={handleInputChange}
               />
@@ -322,13 +322,13 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
             </div>
 
             <div>
-              <label htmlFor="hora" className="block text-sm font-medium text-gray-700 mb-3">
+              <label htmlFor="hora" className="block text-sm font-medium text-slate-700 mb-3">
                 Hora de Propuesta *
               </label>
               <select
                 id="hora"
                 name="hora"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition-colors duration-200"
                 value={formData.hora}
                 onChange={handleInputChange}
               >
@@ -342,17 +342,17 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
             </div>
           </div>
 
-          <div className="flex gap-4 justify-end pt-6 border-t border-gray-200">
+          <div className="flex gap-4 justify-end pt-6 border-t border-slate-200">
             <button
               type="button"
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              className="px-6 py-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-lg transition-colors duration-200 font-medium"
               onClick={onClose}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 font-medium"
+              className="px-6 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors duration-200 font-medium"
             >
               Crear Propuesta
             </button>

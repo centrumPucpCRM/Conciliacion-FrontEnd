@@ -36,86 +36,87 @@ import DAFPreConciliado from "./pages/propuestas/DAF/DAFPreConciliado";
 import DAFConciliado from "./pages/propuestas/DAF/DAFConciliado";
 
 // DAF-SD
-import DAFSDAutorizacion from "./pages/propuestas/DAF/DAF-SDAutorizacion";
+import DAFSubdirectorAPROBACION from "./pages/propuestas/SD/DAFSubdirectorAPROBACION";
 
 import "./App.css";
+import AppLayout from "./components/layout/AppLayout";
 
 // Configuración del router con future flag activado
 const router = createBrowserRouter(
   [
     { path: "/", element: <Navigate to="/main" replace /> },
-    { path: "/main", element: <PaginaPrincipal /> },
-    { path: "/main/propuestas", element: <PaginaPropuestas /> },
-    { path: "/main/conciliaciones", element: <PaginaConciliaciones /> },
+    { path: "/main/dashboard", element: <AppLayout><PaginaPrincipal /></AppLayout> },
+    { path: "/main/propuestas", element: <AppLayout><PaginaPropuestas /></AppLayout> },
+    { path: "/main/conciliaciones", element: <AppLayout><PaginaConciliaciones /></AppLayout> },
 
     // ADMIN
     {
       path: "/propuesta/administrador/generada/:propuestaId",
-      element: <AdministradorGenerada />,
+      element: <AppLayout><AdministradorGenerada /></AppLayout>,
     },
     {
       path: "/propuesta/administrador/PRECONCILIADA/:propuestaId",
-      element: <AdministradorPreConciliado />,
+      element: <AppLayout><AdministradorPreConciliado /></AppLayout>,
     },
     {
       path: "/propuesta/administrador/conciliado/:propuestaId",
-      element: <AdministradorConciliado />,
+      element: <AppLayout><AdministradorConciliado /></AppLayout>,
     },
     {
       path: "/propuesta/administrador/cancelado/:propuestaId",
-      element: <AdministradorCancelado />,
+      element: <AppLayout><AdministradorCancelado /></AppLayout>,
     },
 
     // DAF - Supervisor
     {
       path: "/propuesta/DAF - Supervisor/generada/:propuestaId",
-      element: <DAFGenerada />,
+      element: <AppLayout><DAFGenerada /></AppLayout>,
     },
     {
       path: "/propuesta/DAF - Supervisor/PRECONCILIADA/:propuestaId",
-      element: <DAFPreConciliado />,
+      element: <AppLayout><DAFPreConciliado /></AppLayout>,
     },
     {
       path: "/propuesta/DAF - Supervisor/conciliado/:propuestaId",
-      element: <DAFConciliado />,
+      element: <AppLayout><DAFConciliado /></AppLayout>,
     },
 
     // DAF - Subdirector
     {
       path: "/propuesta/DAF - Subdirector/generada/:propuestaId",
-      element: <DAFGenerada />,
+      element: <AppLayout><DAFGenerada /></AppLayout>,
     },
     {
       path: "/propuesta/DAF - Subdirector/PRECONCILIADA/:propuestaId",
-      element: <DAFPreConciliado />,
+      element: <AppLayout><DAFPreConciliado /></AppLayout>,
     },
     {
-      path: "/propuesta/DAF - Subdirector/autorizacion/:propuestaId",
-      element: <DAFSDAutorizacion />,
+      path: "/propuesta/DAF - Subdirector/APROBACION/:propuestaId",
+      element: <AppLayout><DAFSubdirectorAPROBACION /></AppLayout>,
     },
     {
       path: "/propuesta/DAF - Subdirector/conciliado/:propuestaId",
-      element: <DAFConciliado />,
+      element: <AppLayout><DAFConciliado /></AppLayout>,
     },
 
     // JP
     {
       path: "/propuesta/Comercial - Jefe de producto/PRECONCILIADA/:propuestaId",
-      element: <JPPreConciliado />,
+      element: <AppLayout><JPPreConciliado /></AppLayout>,
     },
     {
       path: "/propuesta/Comercial - Jefe de producto/conciliado/:propuestaId",
-      element: <JPConciliado />,
+      element: <AppLayout><JPConciliado /></AppLayout>,
     },
 
     // Comercial - Subdirector
     {
       path: "/propuesta/Comercial - Subdirector/PRECONCILIADA/:propuestaId",
-      element: <SubdirectorPreConciliado />,
+      element: <AppLayout><SubdirectorPreConciliado /></AppLayout>,
     },
     {
       path: "/propuesta/Comercial - Subdirector/conciliado/:propuestaId",
-      element: <SubdirectorConciliado />,
+      element: <AppLayout><SubdirectorConciliado /></AppLayout>,
     },
   ],
   {

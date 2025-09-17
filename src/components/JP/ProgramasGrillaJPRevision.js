@@ -103,12 +103,12 @@ const ProgramasGrillaJPRevision = ({
     const oportunidades = programa.oportunidades || [];
     const matriculados = oportunidades.filter(
       (m) =>
-        m.etapa_venta_propuesto === '3 - Matrícula' ||
+        m.etapa_venta_propuesto === '3 - Matricula' ||
         m.etapa_venta_propuesto === '4 - Cerrada/Ganada'
     );
     const noMatriculados = oportunidades.filter(
       (m) =>
-        m.etapa_venta_propuesto !== '3 - Matrícula' &&
+        m.etapa_venta_propuesto !== '3 - Matricula' &&
         m.etapa_venta_propuesto !== '3.5 - Tentativa Matricula' &&
         m.etapa_venta_propuesto !== '4 - Cerrada/Ganada'
     );
@@ -229,7 +229,7 @@ const ProgramasGrillaJPRevision = ({
                   )}
                 </th>
                 <th className="px-6 py-4 text-left font-semibold text-gray-600 capitalize tracking-wider">Programa</th>
-                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Fecha<br />Inauguración</th>
+                <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Fecha<br />InauguraciÃ³n</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Meta<br />Venta</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Meta<br />Alumnos</th>
                 <th className="px-6 py-4 text-center font-semibold text-gray-600 capitalize tracking-wider">Alumnos<br />Reales</th>
@@ -241,7 +241,7 @@ const ProgramasGrillaJPRevision = ({
               {programasFiltrados.map((programa) => {
                 const matriculados = (programa.oportunidades || []).filter(
                   (p) =>
-                    p.etapa_venta_propuesto === '3 - Matrícula' ||
+                    p.etapa_venta_propuesto === '3 - Matricula' ||
                     p.etapa_venta_propuesto === '3.5 - Tentativa Matricula' ||
                     p.etapa_venta_propuesto === '4 - Cerrada/Ganada'
                 );
@@ -270,7 +270,7 @@ const ProgramasGrillaJPRevision = ({
                       >
                         {programa.fecha_de_inauguracion
                           ? new Date(programa.fecha_de_inauguracion).toLocaleDateString('es-PE')
-                          : '—'}
+                          : 'N/A'}
                       </td>
                       <td
                         className="px-4 py-3 text-right text-sm text-gray-900 cursor-pointer"
@@ -311,7 +311,7 @@ const ProgramasGrillaJPRevision = ({
                                   <th className="px-2 py-1 text-left">Monto</th>
                                   <th className="px-2 py-1 text-left">Monto Propuesto</th>
                                   <th className="px-2 py-1 text-left">Moneda</th>
-                                  <th className="px-2 py-1 text-left">Fecha de Matrícula</th>
+                                  <th className="px-2 py-1 text-left">Fecha de MatrÃ­cula</th>
                                   <th className="px-2 py-1 text-left">Estado</th>
                                 </tr>
                               </thead>
@@ -465,7 +465,7 @@ const ProgramasGrillaJPRevision = ({
                   {Math.round(
                     programasFiltrados.reduce((sum, prog) => {
                       const matriculados = (prog.oportunidades || []).filter(
-                        (p) => p.etapa_venta_propuesto === '3 - Matrícula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada'
+                        (p) => p.etapa_venta_propuesto === '3 - Matricula' || p.etapa_venta_propuesto === '4 - Cerrada/Ganada'
                       );
                       return sum + (prog.alumnos_reales || matriculados.length);
                     }, 0)

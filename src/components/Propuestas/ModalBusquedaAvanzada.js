@@ -62,15 +62,15 @@ function MultiSelect({
         ref={btnRef}
         type="button"
         onClick={toggleOpen}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        className="w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm bg-white text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-sky-200 focus:border-sky-400"
       >
-        <span className={selected.length ? 'text-gray-900' : 'text-gray-500'}>
+        <span className={selected.length ? 'text-slate-900' : 'text-slate-500'}>
           {selected.length
             ? `${selected.length} seleccionad${selected.length === 1 ? 'a' : 'as'}`
             : placeholder}
         </span>
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
           viewBox="0 0 24 24" fill="none" stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -80,33 +80,33 @@ function MultiSelect({
       {open && (
         <div
           ref={panelRef}
-          className={`absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto ${
+          className={`absolute z-10 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-auto ${
             direction === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
           }`}
         >
           {/* Seleccionar todos */}
-          <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3" onClick={toggleAll}>
+          <div className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-3" onClick={toggleAll}>
             <input
               type="checkbox"
               readOnly
               checked={allSelected}
               ref={(el) => { if (el) el.indeterminate = someSelected; }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-sky-500 focus:ring-sky-200 border-slate-200 rounded"
             />
-            <span className="text-sm text-gray-700">Seleccionar todos</span>
+            <span className="text-sm text-slate-700">Seleccionar todos</span>
           </div>
-          <div className="border-t border-gray-200" />
+          <div className="border-t border-slate-200" />
 
           {/* Opciones */}
           {options.map((opt) => (
-            <label key={opt} className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3">
+            <label key={opt} className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={selected.includes(opt)}
                 onChange={() => toggleOne(opt)}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-sky-500 focus:ring-sky-200 border-slate-200 rounded"
               />
-              <span className="text-sm text-gray-700">{opt}</span>
+              <span className="text-sm text-slate-700">{opt}</span>
             </label>
           ))}
         </div>
@@ -185,19 +185,19 @@ export default memo(function ModalBusquedaAvanzada({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-2xl shadow-xl p-8 min-w-[350px] max-w-[90vw]">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl px-8 py-6 min-w-[350px] max-w-[90vw]">
         <h2 className="text-xl font-bold mb-4 text-blue-700">Búsqueda avanzada</h2>
 
         <div className="space-y-4">
           {/* Fecha desde */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Fecha de Creación - Desde
             </label>
             <input
               type="date"
               name="fechaInicio"
-              className={`w-full px-4 py-2 border rounded-lg ${invalidDateRange ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg ${invalidDateRange ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-slate-200'}`}
               value={filtros.fechaInicio}
               onChange={(e) =>
                 setFiltros((prev) => ({ ...prev, fechaInicio: e.target.value }))
@@ -208,13 +208,13 @@ export default memo(function ModalBusquedaAvanzada({
 
           {/* Fecha hasta */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Fecha de Creación - Hasta
             </label>
             <input
               type="date"
               name="fechaFin"
-              className={`w-full px-4 py-2 border rounded-lg ${invalidDateRange ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg ${invalidDateRange ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-slate-200'}`}
               value={filtros.fechaFin}
               onChange={(e) =>
                 setFiltros((prev) => ({ ...prev, fechaFin: e.target.value }))
@@ -230,7 +230,7 @@ export default memo(function ModalBusquedaAvanzada({
 
           {/* Estados */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estados</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Estados</label>
             <MultiSelect
               placeholder="Seleccionar estado(s)…"
               options={estadosOptions}
@@ -242,7 +242,7 @@ export default memo(function ModalBusquedaAvanzada({
 
           {/* Carteras */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Carteras</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Carteras</label>
             <MultiSelect
               placeholder="Seleccionar cartera(s)…"
               options={carterasOptions}
@@ -255,13 +255,13 @@ export default memo(function ModalBusquedaAvanzada({
 
         <div className="flex justify-end gap-2 mt-6">
           <button
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium"
+            className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 font-medium transition hover:bg-slate-50"
             onClick={handleCancel}
           >
             Cancelar
           </button>
           <button
-            className={`px-4 py-2 rounded-lg text-white font-medium ${invalidDateRange ? 'bg-blue-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700'}`}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition ${invalidDateRange ? 'bg-blue-400 cursor-not-allowed opacity-60' : 'bg-sky-500 hover:bg-sky-600'}`}
             onClick={handleApply}
             disabled={invalidDateRange}
           >

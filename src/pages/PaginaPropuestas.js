@@ -10,7 +10,6 @@ import {
 import ModalNuevaPropuesta from '../components/Propuestas/ModalNuevaPropuesta';
 import ModalSeleccionRol from '../components/ModalSeleccionRol';
 import ModalBusquedaAvanzada from '../components/Propuestas/ModalBusquedaAvanzada';
-import PropuestasHeader from '../components/Propuestas/PropuestasHeader';
 import PropuestasToolbar from '../components/Propuestas/PropuestasToolbar';
 import TablaPropuestas from '../components/Propuestas/TablaPropuestas';
 import PropuestasTabsPrincipal from '../components/Propuestas/PropuestasTabsPrincipal';
@@ -200,9 +199,6 @@ const PaginaPropuestas = () => {
     } else if(rol === 'DAF - Subdirector' && propuesta.estado_propuesta === ESTADOS.GENERADA){
       // Usar automáticamente el id_usuario del supervisor (id_usuario: 1)
       ruta = `/propuesta/DAF - Supervisor/GENERADA/${propuesta.id_propuesta}?id_usuario=1`;
-    } else if (rol === 'DAF - Subdirector' && propuesta.estado_propuesta === ESTADOS.AUTORIZACION) {
-      // Usar automáticamente el id_usuario del supervisor (id_usuario: 1)
-      ruta = `/propuesta/DAF - Supervisor/AUTORIZACION/${propuesta.id_propuesta}?id_usuario=1`;
     } else {
       ruta = `/propuesta/${rol}/${propuesta.estado_propuesta}/${propuesta.id_propuesta}`;
     }
@@ -267,8 +263,7 @@ const PaginaPropuestas = () => {
   ), [carteras]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-        <PropuestasHeader onBack={() => navigate('/main')} titulo={"GESTIÓN DE PROPUESTAS"} />
+    <div className="min-h-screen bg-slate-50">
         <PropuestasToolbar
           busquedaNombre={busquedaNombre}
           setBusquedaNombre={setBusquedaNombre}
@@ -353,3 +348,4 @@ const PaginaPropuestas = () => {
 };
 
 export default PaginaPropuestas;
+

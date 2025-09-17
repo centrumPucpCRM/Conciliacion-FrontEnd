@@ -1,26 +1,24 @@
-import React from 'react';
+import React from "react";
 
 const tabs = [
-  { id: 'abiertas', label: 'Abiertas' },
-  { id: 'conciliadas', label: 'Conciliadas' },
-  { id: 'canceladas', label: 'Canceladas' }
+  { id: "abiertas", label: "Abiertas" },
+  { id: "conciliadas", label: "Conciliadas" },
+  { id: "canceladas", label: "Canceladas" },
 ];
 
 const PropuestasTabsPrincipal = ({ activeTab, onTabChange }) => {
   return (
-    <div className="px-12 mt-4">
-      <div className="inline-flex  bg-white shadow-sm overflow-hidden border border-gray-200">
+    <div className="px-8 mt-3">
+      <div className="border border-slate-200 rounded-full bg-white/70 px-2 py-2 shadow-sm backdrop-blur flex items-center gap-1">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`px-6 py-2 text-lg font-medium transition-colors focus:outline-none
-                ${isActive
-                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                  : 'text-gray-600 hover:bg-gray-50'
-                }`}
+              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none ${
+                isActive ? "bg-blue-500 text-white" : "text-slate-600 hover:bg-slate-100"
+              }`}
             >
               {tab.label}
             </button>

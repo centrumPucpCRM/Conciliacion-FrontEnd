@@ -254,19 +254,33 @@ const JPPreConciliado = () => {
         return {
           ...p,
           oportunidades: (p.oportunidades ?? []).map(oportunidad => {
-            if (oportunidad.dni === identificador) {
+            if (oportunidad.dni !== identificador) {
+              return oportunidad;
+            }
+            const valorOriginal =
+              oportunidad.monto_propuesto_original ??
+              oportunidad.monto_propuesto ??
+              oportunidad.monto;
+            if (nuevoMonto === null) {
+              const { monto_propuesto_daf: _omitMontoPropuestoDaf, ...resto } = oportunidad;
               return {
-                ...oportunidad,
-                agregadoEnSesion: oportunidad.agregadoEnSesion === true,
+                ...resto,
                 monto_inicial: oportunidad.monto,
-                monto_propuesto: nuevoMonto,
-                monto_propuesto_jp: nuevoMonto,
-                monto_editado_en_sesion: true,
-                monto_editado_por_jp: true,
-                monto_editado_por_daf: false
+                monto_propuesto_jp: valorOriginal,
+                monto_editado_en_sesion: false,
+                monto_editado_por_jp: false,
               };
             }
-            return oportunidad;
+            return {
+              ...oportunidad,
+              monto_inicial: oportunidad.monto,
+              monto_propuesto_original: valorOriginal,
+              monto_propuesto_daf: nuevoMonto,
+              monto_propuesto_jp: nuevoMonto,
+              monto_editado_en_sesion: true,
+              monto_editado_por_jp: true,
+              monto_editado_por_daf: false,
+            };
           })
         };
       });
@@ -281,16 +295,20 @@ const JPPreConciliado = () => {
         return {
           ...p,
           oportunidades: (p.oportunidades ?? []).map(oportunidad => {
-            if (oportunidad.dni === dni) {
-              return {
-                ...oportunidad,
-                monto_propuesto: oportunidad.monto,
-                monto_propuesto_jp: oportunidad.monto,
-                monto_editado_en_sesion: false,
-                monto_editado_por_jp: false
-              };
+            if (oportunidad.dni !== dni) {
+              return oportunidad;
             }
-            return oportunidad;
+            const valorOriginal =
+              oportunidad.monto_propuesto_original ??
+              oportunidad.monto_propuesto ??
+              oportunidad.monto;
+            const { monto_propuesto_daf: _omitMontoPropuestoDaf, ...resto } = oportunidad;
+            return {
+              ...resto,
+              monto_propuesto_jp: valorOriginal,
+              monto_editado_en_sesion: false,
+              monto_editado_por_jp: false,
+            };
           })
         };
       });
@@ -454,6 +472,7 @@ const JPPreConciliado = () => {
               onUpdateProgramas={(gridId, updated) => {
                 if (gridId === "mesConciliado") {
                   setProgramasMesConciliadoLocal(updated);
+                  setProgramas([...updated, ...programasRestoLocal]);
                 }
               }}
             />
@@ -473,6 +492,7 @@ const JPPreConciliado = () => {
               onUpdateProgramas={(gridId, updated) => {
                 if (gridId === "mesesPasados") {
                   setProgramasRestoLocal(updated);
+                  setProgramas([...programasMesConciliadoLocal, ...updated]);
                 }
               }}
             />

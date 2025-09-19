@@ -255,14 +255,21 @@ const ModalNuevaPropuesta = ({ isOpen, onClose, onPropuestaCreada }) => {
     });
   };
 
-  // Example: fetch carterasDisponibles on mount (replace with real API call)
+  // Fetch carterasDisponibles from backend using utility
   useEffect(() => {
-    setLoadingCarteras(true);
-    // Simulate API call
-    setTimeout(() => {
-      setCarterasDisponibles(['Cartera 1', 'Cartera 2', 'Cartera 3']);
+    async function loadCarteras() {
+      setLoadingCarteras(true);
+      try {
+        // Import fetchCarteras dynamically to avoid circular deps if needed
+        const { fetchCarteras } = await import('../../utils/mockData');
+        const carteras = await fetchCarteras();
+        setCarterasDisponibles(carteras);
+      } catch (err) {
+        setCarterasDisponibles([]);
+      }
       setLoadingCarteras(false);
-    }, 500);
+    }
+    loadCarteras();
   }, []);
 
 

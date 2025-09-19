@@ -13,7 +13,7 @@ import ModalBusquedaAvanzada from '../components/Propuestas/ModalBusquedaAvanzad
 import PropuestasToolbar from '../components/Propuestas/PropuestasToolbar';
 import TablaPropuestas from '../components/Propuestas/TablaPropuestas';
 import PropuestasTabsPrincipal from '../components/Propuestas/PropuestasTabsPrincipal';
-
+import PropuestasHeader from '../components/Propuestas/PropuestasHeader';
 const PaginaPropuestas = () => {
   const [matrizPermisos, setMatrizPermisos] = useState(null);
   const [loadingPermisos, setLoadingPermisos] = useState(true);
@@ -264,6 +264,11 @@ const PaginaPropuestas = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <PropuestasHeader
+        onBack={() => navigate('/main/dashboard')}
+        titulo="Propuestas"
+        showRoleSwitch={true}
+      />
         <PropuestasToolbar
           busquedaNombre={busquedaNombre}
           setBusquedaNombre={setBusquedaNombre}

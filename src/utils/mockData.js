@@ -47,13 +47,7 @@ function generarIdentificador() {
   return Math.floor(10000 + Math.random() * 90000).toString();
 }
 
-function generarNombreAlumno() {
-  const nombres = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Martínez', 'Luis Rodríguez', 
-                   'Carmen Sánchez', 'Jorge Torres', 'Isabel Flores', 'Roberto Morales', 'Patricia Ruiz'];
-  const dni = Math.floor(10000000 + Math.random() * 90000000).toString();
-  const nombre = nombres[Math.floor(Math.random() * nombres.length)];
-  return `${nombre} - ${dni}`;
-}
+
 export function generarPersonasPorPrograma({
   cantidadMatriculados = 3,
   cantidadInteres = 2,
@@ -87,18 +81,7 @@ export function generarPersonasPorPrograma({
   }
   return personas;
   }
-  function randomFechaInaguracion() {
-    const year = 2025;
 
-    // 🔹 Mes entre 4 y 10 (abril–octubre)
-    const month = Math.floor(Math.random() * (10 - 4 + 1)) + 4; // 4–10
-    const monthIndex = month - 1; // Date usa 0–11
-
-    // 🔹 Día válido entre 1 y 28 (para evitar problemas con meses cortos)
-    const day = Math.floor(Math.random() * 28) + 1;
-
-    return new Date(year, monthIndex, day);
-  }
 
 export async function generarProgramasPorCartera() {
   const carteras = await fetchCarteras();

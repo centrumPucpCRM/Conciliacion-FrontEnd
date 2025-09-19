@@ -25,7 +25,7 @@ const PaginaConciliaciones = () => {
             <div className="flex items-center space-x-4">
               <button 
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
-                onClick={() => navigate('/main')}
+                onClick={() => navigate('/mai/dashboard')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

@@ -44,7 +44,7 @@ import AppLayout from "./components/layout/AppLayout";
 // Configuración del router con future flag activado
 const router = createBrowserRouter(
   [
-    { path: "/", element: <Navigate to="/main" replace /> },
+    { path: "/", element: <Navigate to="/main/dashboard" replace /> },
     { path: "/main/dashboard", element: <AppLayout><PaginaPrincipal /></AppLayout> },
     { path: "/main/propuestas", element: <AppLayout><PaginaPropuestas /></AppLayout> },
     { path: "/main/conciliaciones", element: <AppLayout><PaginaConciliaciones /></AppLayout> },

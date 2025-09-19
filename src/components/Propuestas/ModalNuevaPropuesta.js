@@ -26,86 +26,6 @@ const HOURS_24 = Array.from({ length: 24 }, (_, i) => ({
 const BACKEND_BASE_URL = 'http://localhost:8000';
 
 
-const parseCsvToJson = (csvText) => {
-  if (!csvText) return [];
-  const sanitizedText = csvText.replace(/\uFEFF/g, '');
-  const rows = [];
-  let current = '';
-  let row = [];
-  let inQuotes = false;
-
-  for (let i = 0; i < sanitizedText.length; i += 1) {
-    const char = sanitizedText[i];
-
-    if (char === '"') {
-      if (inQuotes && sanitizedText[i + 1] === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      row.push(current);
-      current = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && sanitizedText[i + 1] === '\n') {
-        i += 1;
-      }
-      row.push(current);
-      rows.push(row);
-      row = [];
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current || row.length) {
-    row.push(current);
-    rows.push(row);
-  }
-
-  if (rows.length === 0) return [];
-
-  const headers = rows[0].map((header) => header.trim());
-  const dataRows = rows.slice(1);
-  const isNumeric = (value) => /^-?\d+(?:\.\d+)?$/.test(value);
-
-  return dataRows
-    .filter((entries) => entries.some((cell) => {
-      const value = cell === undefined || cell === null ? '' : String(cell);
-      return value.trim() !== '';
-    }))
-    .map((entries) => {
-      const record = {};
-      headers.forEach((header, index) => {
-        if (!header) {
-          return;
-        }
-        const rawValue = entries[index];
-        const safeValue = rawValue === undefined || rawValue === null ? '' : String(rawValue);
-        const trimmed = safeValue.trim();
-        const unquoted =
-          trimmed.startsWith('"') && trimmed.endsWith('"')
-            ? trimmed.slice(1, -1).replace(/""/g, '"')
-            : trimmed.replace(/""/g, '"');
-        const normalized = unquoted.replace(/,/g, '.');
-        const lower = unquoted.toLowerCase();
-        let finalValue = unquoted;
-        if (lower === 'true' || lower === 'false') {
-          finalValue = lower === 'true';
-        } else if (isNumeric(normalized)) {
-          finalValue = Number(normalized);
-        }
-        record[header] = finalValue;
-      });
-      return record;
-    });
-};
-;
-
-;
-
 const hourToS3Suffix = (hourValue) => {
 
   const hour = Number(hourValue);
@@ -632,12 +552,6 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  const csvText = await csvResponse.clone().text();
-  const registrosCsv = parseCsvToJson(csvText);
-  const detalle = formData.carteras.length > 0
-    ? registrosCsv.filter((row) => formData.carteras.includes(row['cartera.nombre']))
-    : registrosCsv;
-
   try {
     const uploadResponse = await fetch(`${BACKEND_BASE_URL}/upload-conciliacion-csv/`, {
       method: 'POST',
@@ -650,7 +564,7 @@ const handleSubmit = async (e) => {
           fecha: fechaEnvio,
           carteras: formData.carteras
         },
-        detalle
+        csv_url: csvUrl
       })
     });
     if (!uploadResponse.ok) {
